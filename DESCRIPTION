@@ -1,13 +1,11 @@
 Package: robustHD
 Type: Package
 Title: Robust methods for high-dimensional data
-Version: 0.1.0
-Date: 2012-04-10
-Author: Andreas Alfons
-Maintainer: Andreas Alfons <andreas.alfons@econ.kuleuven.be>
-Depends: Rcpp (>= 0.9.10), cvTools (>= 0.3.0), lattice, MASS,
+Version: 0.2.0
+Date: 2012-08-24
+Depends: R (>= 2.14.1), Rcpp (>= 0.9.10), ggplot2, MASS, perry,
         robustbase (>= 0.6-0)
-Imports: RcppArmadillo (>= 0.2.36), stats
+Imports: RcppArmadillo (>= 0.3.0), stats
 LinkingTo: Rcpp, RcppArmadillo
 Suggests: mvtnorm
 Description: Robust methods for high-dimensional data, in particular
@@ -15,11 +13,16 @@ Description: Robust methods for high-dimensional data, in particular
         regression and sparse regression.
 License: GPL (>= 2)
 LazyLoad: yes
-Collate: 'AIC.R' 'backend.R' 'coef.R' 'corHuber.R' 'cv.R' 'fastLasso.R'
-        'fitModels.R' 'fitted.R' 'initialSubsets.R' 'lambda0.R'
-        'plot.R' 'predict.R' 'print.R' 'repCV.R' 'residuals.R'
-        'rlars.R' 'sparseLTS.R' 'standardize.R' 'test.R' 'utils.R'
-        'weights.R' 'winsorize.R' 'zzz.R'
-Packaged: 2012-04-10 16:48:44 UTC; andi
+Authors@R: person("Andreas", "Alfons", email =
+        "andreas.alfons@kuleuven.be", role = c("aut", "cre"))
+Collate: 'accessors.R' 'AIC.R' 'backend.R' 'coef.R' 'corHuber.R'
+        'fastLasso.R' 'fitted.R' 'fortify.R' 'initialSubsets.R'
+        'lambda0.R' 'perry.R' 'plot.R' 'predict.R' 'print.R'
+        'residuals.R' 'rlars.R' 'seqModel.R' 'sparseLTS.R'
+        'standardize.R' 'subset.R' 'test.R' 'utils.R' 'weights.R'
+        'winsorize.R' 'zzz.R'
+Packaged: 2012-08-24 12:45:49 UTC; andi
+Author: Andreas Alfons [aut, cre]
+Maintainer: Andreas Alfons <andreas.alfons@kuleuven.be>
 Repository: CRAN
-Date/Publication: 2012-04-10 18:00:47
+Date/Publication: 2012-08-24 19:12:23
