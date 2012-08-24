@@ -1,5 +1,7 @@
 \name{critPlot}
 \alias{critPlot}
+\alias{critPlot.optSeqModel}
+\alias{critPlot.optSparseLTSGrid}
 \alias{critPlot.rlars}
 \alias{critPlot.seqModel}
 \alias{critPlot.sparseLTSGrid}
@@ -7,9 +9,15 @@
 \usage{
   critPlot(x, ...)
 
-  \method{critPlot}{seqModel} (x, ...)
+  \method{critPlot}{seqModel} (x, size = c(0.5, 2), ...)
+
+  \method{critPlot}{optSeqModel} (x, ...)
 
   \method{critPlot}{sparseLTSGrid} (x,
+    fit = c("reweighted", "raw", "both"), size = c(0.5, 2),
+    ...)
+
+  \method{critPlot}{optSparseLTSGrid} (x,
     fit = c("reweighted", "raw", "both"), ...)
 }
 \arguments{
@@ -21,15 +29,23 @@
   fits, \code{"raw"} for the raw fits, or \code{"both"} for
   both estimators.}
 
+  \item{size}{a numeric vector of length two giving the
+  line width and the point size, respectively.}
+
   \item{\dots}{for the generic function, additional
   arguments to be passed down to methods.  For the
   \code{"seqModel"} and \code{"sparseLTSGrid"} methods,
   additional arguments to be passed down to
-  \code{\link[lattice]{xyplot}}.}
+  \code{\link[ggplot2]{geom_line}} and
+  \code{\link[ggplot2]{geom_point}}. For the
+  \code{"optSeqModel"} and \code{"optSparseLTSGrid"}
+  methods, additional arguments to be passed down to the
+  \code{\link[perry:perryPlot]{plot}} method for the
+  prediction error results.}
 }
 \value{
-  An object of class \code{"trellis"} (see
-  \code{\link[lattice]{xyplot}}).
+  An object of class \code{"ggplot"} (see
+  \code{\link[ggplot2]{ggplot}}).
 }
 \description{
   Produce a plot of the values of the optimality criterion
@@ -64,7 +80,7 @@ critPlot(fit)
   Andreas Alfons
 }
 \seealso{
-  \code{\link[lattice]{xyplot}}, \code{\link{rlars}},
+  \code{\link[ggplot2]{ggplot}}, \code{\link{rlars}},
   \code{\link{sparseLTSGrid}}
 }
 \keyword{hplot}

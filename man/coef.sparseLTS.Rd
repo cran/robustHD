@@ -1,4 +1,5 @@
 \name{coef.sparseLTS}
+\alias{coef.optSparseLTSGrid}
 \alias{coef.sparseLTS}
 \alias{coef.sparseLTSGrid}
 \title{Extract coefficients from sparse LTS regression models}
@@ -7,7 +8,11 @@
     fit = c("reweighted", "raw", "both"), zeros = TRUE,
     ...)
 
-  \method{coef}{sparseLTSGrid} (object, s,
+  \method{coef}{sparseLTSGrid} (object, s = NA,
+    fit = c("reweighted", "raw", "both"), zeros = TRUE,
+    drop = !is.null(s), ...)
+
+  \method{coef}{optSparseLTSGrid} (object,
     fit = c("reweighted", "raw", "both"), zeros = TRUE,
     ...)
 }
@@ -34,18 +39,17 @@
   the coefficients from both estimators.}
 
   \item{zeros}{a logical indicating whether to keep zero
-  coefficients (\code{TRUE}, the default) or to drop them
+  coefficients (\code{TRUE}, the default) or to omit them
   (\code{FALSE}).}
+
+  \item{drop}{a logical indicating whether to reduce the
+  dimension to a vector in case of only one model.}
 
   \item{\dots}{currently ignored.}
 }
 \value{
-  If coefficients for only one model are requested, they
-  are returned in the form of a numeric vector.
-
-  Otherwise a numeric matrix is returned in which each
-  column contains the coefficients of the corresponding
-  model.
+  A numeric vector or matrix containing the requested
+  regression coefficients.
 }
 \description{
   Extract coefficients from sparse least trimmed squares
