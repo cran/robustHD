@@ -1,6 +1,6 @@
-5714338366696c763261bd443415d00b *DESCRIPTION
+1617867020c3db1ebcad7ec07c5b9753 *DESCRIPTION
 b4ea7c3f49c567a2c37f08f967fbd159 *NAMESPACE
-50dabde4bcf16c5aeb40f11b655c91fc *NEWS
+a7e7d88aa8d5606749e0cacc6e474d21 *NEWS
 d1f6d3afcb10101040530c2aa96452d5 *R/AIC.R
 19f5841fc66afa76d21f6da18055dcf5 *R/accessors.R
 8102bf18550e927e1d69119692741338 *R/backend.R
@@ -12,13 +12,13 @@ e46216c1920ed71039fcf263ca4e8455 *R/fitted.R
 b555675173cbbd5d7e5e29fcadadee38 *R/initialSubsets.R
 d90b323359dbebe44a49f2f1b00aba16 *R/lambda0.R
 2d83022cb79a0913915c6ba0bab4082d *R/perry.R
-d8adc7a7e7d6647bf5762e4149299374 *R/plot.R
+34e348563d4494f064ed896398ecb731 *R/plot.R
 74acce5e050771a7d1170ec72d132244 *R/predict.R
 521f2e5cddb612078b1a7cb6e8c494e8 *R/print.R
 0e76617bf3f24e41c3fb11d606c56f5a *R/residuals.R
-baee34f697e01b11d78db6d13475d331 *R/rlars.R
+d86c4851dc3059eed9a11dbafd541408 *R/rlars.R
 9262e8f53e72bd1f06992d31ec9fcaa2 *R/seqModel.R
-83dfb23049669035342f33862b74e9b5 *R/sparseLTS.R
+0ad753b96267d8b51c6a67a57d1ce403 *R/sparseLTS.R
 5f754e1a733be05dbb96c7cfc196812e *R/standardize.R
 a9bf824182cb1a8dc67f13d57edf455d *R/subset.R
 8794ab45e0419f0a7e2da9739a383ce0 *R/test.R
@@ -65,8 +65,8 @@ ecebca04617756add70bc389f63b7bdd *man/predict.seqModel.Rd
 a6515a9a887e54ce440ce121755ce648 *man/predict.sparseLTS.Rd
 c604237a8382b8c45b1b399fd1ae6f1e *man/residuals.seqModel.Rd
 9de2a336e274cd94a94c3547bfcdd95b *man/residuals.sparseLTS.Rd
-c8654c4ac312ba8e3a3878b34dc58276 *man/rlars.Rd
-59a504041a925cf4f7f9d052c70f6add *man/robustHD-package.Rd
+6c8b2d6f2b8ba5bfe05c992ab5d27e20 *man/rlars.Rd
+d7bb453ced7a48df477906872fb3feb1 *man/robustHD-package.Rd
 49994c9c5f56297aea3c65e3db4463a1 *man/sparseLTS.Rd
 8fafebe79820360ca3e2f6351cf174e4 *man/sparseLTSGrid.Rd
 ab66f2d9675085cc9f26fcbc778bc651 *man/standardize.Rd
