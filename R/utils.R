@@ -47,9 +47,6 @@ checkSMax <- function(sMax, n, p) {
     if(!isTRUE(is.finite(sMax[1])) || !isTRUE(sMax[1] <= min(p, n-1))) {
         sMax[1] <- min(p, n-1)
     }
-#    if(!isTRUE(is.finite(sMax[2])) || !isTRUE(sMax[2] <= min(p, n-1))) {
-#        sMax[2] <- min(p, n-1)
-#    }
     if(!isTRUE(is.finite(sMax[2]))) {
         sMax[2] <- NA
     } else {
