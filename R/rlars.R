@@ -147,6 +147,7 @@
 #' @export
 #' @import Rcpp 
 #' @import RcppArmadillo
+#' @import parallel
 
 rlars <- function(x, ...) UseMethod("rlars")
 
