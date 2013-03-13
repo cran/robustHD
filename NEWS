@@ -1,3 +1,27 @@
+Changes in robustHD version 0.3.0
+
+    + Redesign of the class structure.
+    
+    + Redesign of how C++ back end is called.
+    
+    + Functionality of sparseLTSGrid() now included in sparseLTS(); 
+      sparseLTSGrid() is now a deprecated wrapper function.
+    
+    + Restructured internal code for computing initial subsets for sparse LTS.
+    
+    + rlars() now supports data cleaning RLARS, with an extra PCA step for 
+      high-dimensional data.
+    
+    + New argument 's' in rlars() to select the steps along the sequence for 
+      which to compute submodels
+    
+    + fortify() and diagnosticPlot() methods for class "seqModel".
+    
+    + Bugfix in predict() method for "sparseLTS" if object was computed without 
+      intercept.
+
+
+
 Changes in robustHD version 0.2.2
 
     + Bugfix in sparseLTS() for more stability of the results.

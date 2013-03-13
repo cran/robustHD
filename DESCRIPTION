@@ -1,11 +1,11 @@
 Package: robustHD
 Type: Package
 Title: Robust methods for high-dimensional data
-Version: 0.2.2
-Date: 2012-10-30
+Version: 0.3.0
+Date: 2013-03-13
 Depends: R (>= 2.14.1), Rcpp (>= 0.9.10), ggplot2 (>= 0.9.2), MASS,
-        parallel, perry, robustbase (>= 0.6-0)
-Imports: RcppArmadillo (>= 0.3.0), stats
+        parallel, perry (>= 0.2.0), robustbase (>= 0.6-0)
+Imports: RcppArmadillo (>= 0.3.0), pcaPP, stats
 LinkingTo: Rcpp, RcppArmadillo
 Suggests: mvtnorm
 Description: Robust methods for high-dimensional data, in particular
@@ -13,16 +13,11 @@ Description: Robust methods for high-dimensional data, in particular
         regression and sparse regression.
 License: GPL (>= 2)
 LazyLoad: yes
-Authors@R: person("Andreas", "Alfons", email =
-        "andreas.alfons@kuleuven.be", role = c("aut", "cre"))
-Collate: 'accessors.R' 'AIC.R' 'backend.R' 'coef.R' 'corHuber.R'
-        'fastLasso.R' 'fitted.R' 'fortify.R' 'initialSubsets.R'
-        'lambda0.R' 'perry.R' 'plot.R' 'predict.R' 'print.R'
-        'residuals.R' 'rlars.R' 'seqModel.R' 'sparseLTS.R'
-        'standardize.R' 'subset.R' 'test.R' 'utils.R' 'weights.R'
-        'winsorize.R' 'zzz.R'
-Packaged: 2012-10-30 08:34:30 UTC; andi
+Authors@R: person("Andreas", "Alfons", email = "alfons@ese.eur.nl",
+        role = c("aut", "cre"))
+Packaged: 2013-03-13 10:26:46 UTC; andreas
 Author: Andreas Alfons [aut, cre]
-Maintainer: Andreas Alfons <andreas.alfons@kuleuven.be>
+Maintainer: Andreas Alfons <alfons@ese.eur.nl>
+NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2012-10-30 09:34:50
+Date/Publication: 2013-03-13 12:09:02

@@ -3,6 +3,7 @@
  *         KU Leuven
  */
 
+/*
 #ifndef _robustHD_FASTRLARS_H
 #define _robustHD_FASTRLARS_H
 
@@ -20,3 +21,4 @@ RcppExport SEXP R_fastRlars(SEXP R_x, SEXP R_y, SEXP R_sMax, SEXP R_c,
 		SEXP R_prob, SEXP R_tol, SEXP scaleFun, SEXP R_ncores);
 
 #endif
+*/
