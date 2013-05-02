@@ -1,6 +1,6 @@
-0f7b7ebec45348ca25838b3c15fc5d25 *DESCRIPTION
+af761543c66cdc72a2872abf06309831 *DESCRIPTION
 eff4efc89eddf344e046b765ed2ae2b5 *NAMESPACE
-87b579686f03e48288ce1311a3d1fd24 *NEWS
+695915be37c66f8b7c3679046f20b32f *NEWS
 520aa678dd7130c992a5f769cf91e80b *R/AIC.R
 39bc8b8530940782324ab638edb37c41 *R/accessors.R
 e0a3db32ffe27c10aadc4743be98d224 *R/coef.R
@@ -18,7 +18,7 @@ ca182f224c55ad289959ff757a789ab9 *R/perry.R
 43c283c8eb3bfab3762f67edf039bbf8 *R/residuals.R
 c7bf58bbb3e15f7d07b24aedb0d5a324 *R/rlars.R
 f89969fdac7d5f8e12db37f81aa89325 *R/seqModel.R
-6bdc3e1e1d33373b2ae32f80e230ff2e *R/sparseLTS.R
+1a15f4a19524c3cf4cac0833babe31ce *R/sparseLTS.R
 05578ace83d7e5d74b9d227f910733a9 *R/standardize.R
 6760c58e52cdc842dcf0eac111bccbcc *R/test.R
 274c132d50a93eb39dabce6de47b0ac0 *R/utils.R
@@ -58,7 +58,7 @@ eff29e01b6cfe4f905be2d6612ef6d1d *man/plot.seqModel.Rd
 34158c9f03bc5be08055a4d11d5722d0 *man/residuals.seqModel.Rd
 9f3b1054e3923f382acc8d048992701b *man/rlars.Rd
 60d6e50dcc43ec72a170ac8e10c4cabc *man/robustHD-deprecated.Rd
-99710097dac6f76ff1e75d998c175d6d *man/robustHD-package.Rd
+556cc953afc048047019227dfe611960 *man/robustHD-package.Rd
 bcec4e94e8d32fabbbe27d6ac5f3564b *man/sparseLTS.Rd
 bbdb96deeba7088d79ac886d5daa909d *man/standardize.Rd
 b4cecfae5a0a20bdde6003b7fadb5adc *man/winsorize.Rd
