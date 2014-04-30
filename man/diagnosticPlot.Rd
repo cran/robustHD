@@ -1,21 +1,28 @@
 \name{diagnosticPlot}
 \alias{diagnosticPlot}
 \alias{diagnosticPlot.default}
+\alias{diagnosticPlot.grplars}
 \alias{diagnosticPlot.perrySeqModel}
 \alias{diagnosticPlot.perrySparseLTS}
 \alias{diagnosticPlot.rlars}
 \alias{diagnosticPlot.seqModel}
 \alias{diagnosticPlot.sparseLTS}
+\alias{diagnosticPlot.tslars}
+\alias{diagnosticPlot.tslarsP}
 \title{Diagnostic plots for a sequence of regression models}
 \usage{
   diagnosticPlot(x, ...)
 
-  \method{diagnosticPlot}{seqModel} (x, s = NA, ...)
+  \method{diagnosticPlot}{seqModel} (x, s = NA,
+    covArgs = list(), ...)
 
   \method{diagnosticPlot}{perrySeqModel} (x, ...)
 
+  \method{diagnosticPlot}{tslars} (x, p, ...)
+
   \method{diagnosticPlot}{sparseLTS} (x, s = NA,
-    fit = c("reweighted", "raw", "both"), ...)
+    fit = c("reweighted", "raw", "both"), covArgs = list(),
+    ...)
 
   \method{diagnosticPlot}{perrySparseLTS} (x, ...)
 
@@ -31,6 +38,10 @@
   corresponding \code{\link[=fortify.seqModel]{fortify}}
   method).}
 
+  \item{p}{an integer giving the lag length for which to
+  produce the plot (the default is to use the optimal lag
+  length).}
+
   \item{s}{for the \code{"seqModel"} method, an integer
   vector giving the steps of the submodels for which to
   produce diagnostic plots (the default is to use the
@@ -45,6 +56,10 @@
   for the reweighted fit, \code{"raw"} for diagnostic plots
   for the raw fit, or \code{"both"} for diagnostic plots
   for both fits.}
+
+  \item{covArgs}{a list of arguments to be passed to
+  \code{\link[robustbase]{covMcd}} for the regression
+  diagnostic plot (see \dQuote{Details}).}
 
   \item{which}{a character string indicating which plot to
   show.  Possible values are \code{"all"} (the default) for
@@ -78,6 +93,8 @@
 
   \item{\dots}{for the generic function, additional
   arguments to be passed down to methods.  For the
+  \code{"tslars"} method, additional arguments to be passed
+  down to the \code{"seqModel"} method.  For the
   \code{"perrySeqModel"} and \code{"perrySparseLTS"}
   method, additional arguments to be passed down to the
   \code{"seqModel"} and \code{"sparseLTS"} method,
@@ -107,7 +124,7 @@
   observation number).  The default for \code{id.n} is the
   number of regression outliers, i.e., the number of
   observations whose residuals are too large (cf.
-  \code{\link[=wt.sparseLTS]{wt}}).
+  \code{\link{wt}}).
 
   In the plots of the standardized residuals versus their
   index or the fitted values, horizontal reference lines
@@ -117,7 +134,7 @@
   number).  The default for \code{id.n} is the number of
   regression outliers, i.e., the number of observations
   whose absolute residuals are too large (cf.
-  \code{\link[=wt.sparseLTS]{wt}}).
+  \code{\link{wt}}).
 
   For the regression diagnostic plot, the robust
   Mahalanobis distances of the predictor variables are
@@ -135,11 +152,10 @@
   number).  The default for \code{id.n} is the number of
   all outliers: regression outliers (i.e., observations
   whose absolute residuals are too large, cf.
-  \code{\link[=wt.sparseLTS]{wt}}) and leverage points
-  (i.e., observations with robust Mahalanobis distance
-  larger than the 97.5\% quantile of the
-  \eqn{\chi^{2}}{chi-squared} distribution with \eqn{p}
-  degrees of freedom).
+  \code{\link{wt}}) and leverage points (i.e., observations
+  with robust Mahalanobis distance larger than the 97.5\%
+  quantile of the \eqn{\chi^{2}}{chi-squared} distribution
+  with \eqn{p} degrees of freedom).
 }
 \examples{
 ## generate data
@@ -179,6 +195,9 @@ diagnosticPlot(fitSparseLTS, fit = "both")
 }
 \seealso{
   \code{\link[ggplot2]{ggplot}}, \code{\link{rlars}},
+  \code{\link{grplars}}, \code{\link{rgrplars}},
+  \code{\link{tslarsP}}, \code{\link{rtslarsP}},
+  \code{\link{tslars}}, \code{\link{rtslars}},
   \code{\link{sparseLTS}},
   \code{\link[robustbase:ltsPlot]{plot.lts}}
 }

@@ -64,7 +64,7 @@ print.perrySparseLTS <- function(x, ...) {
 }
 
 #' @S3method print seqModel
-print.seqModel <- function(x, zeros = FALSE, ...) {
+print.seqModel <- function(x, zeros = FALSE, best = TRUE, ...) {
   # print function call
   if(!is.null(call <- x$call)) {
     cat("\nCall:\n")
@@ -73,7 +73,8 @@ print.seqModel <- function(x, zeros = FALSE, ...) {
   # print predictor sequence
   active <- t(x$active)
   steps <- seq_len(ncol(active))
-  dimnames(active) <- list("Var", steps)
+  text <- if(inherits(x, "grplars")) "Group" else "Var"
+  dimnames(active) <- list(text, steps)
   cat("\nSequence of moves:\n")
   print(active, ...)
   # print coefficients of optimal submodel
@@ -85,7 +86,7 @@ print.seqModel <- function(x, zeros = FALSE, ...) {
   cat("\n", text[1], "\n", sep="")
   print(coef(x, zeros=zeros), ...)
   # print optimal step
-  cat("\n", text[2], sprintf(" %d\n", sOpt), sep="")
+  if(isTRUE(best)) cat("\n", text[2], sprintf(" %d\n", sOpt), sep="")
   # return object invisibly
   invisible(x)
 }
@@ -136,6 +137,43 @@ print.sparseLTS <- function(x, fit = c("reweighted", "raw", "both"),
     } else dimnames(info) <- list(text, "")
     print(info, ...)
   }
+  # return object invisibly
+  invisible(x)
+}
+
+#' @S3method print tslarsP
+print.tslarsP <- function(x, ...) {
+  # print "grplars" model
+  print.seqModel(x, best=FALSE, ...)
+  # print optimal step and lag length
+  sOpt <- getSOpt(x)
+  if(is.null(sOpt)) {
+    sOpt <- x$s  # only one step
+    text <- "Step:"
+  } else text <- "Optimal step:"
+  info <- rbind(sOpt, x$p)
+  dimnames(info) <- list(c(text, "Lag length:"), "")
+  print(info, ...)
+  # return object invisibly
+  invisible(x)
+}
+
+#' @S3method print tslars
+print.tslars <- function(x, ...) {
+  # print "grplars" model with optimal lag length
+  pOpt <- x$pOpt
+  xOpt <- x$pFit[[pOpt]]
+  xOpt$call <- x$call
+  print.seqModel(xOpt, best = FALSE, ...)
+  # print optimal step and lag length
+  sOpt <- getSOpt(xOpt)
+  if(is.null(sOpt)) {
+    sOpt <- xOpt$s  # only one step
+    text <- "Step:"
+  } else text <- "Optimal step:"
+  info <- rbind(sOpt, pOpt)
+  dimnames(info) <- list(c(text, "Optimal lag length:"), "")
+  print(info, ...)
   # return object invisibly
   invisible(x)
 }

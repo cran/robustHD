@@ -42,9 +42,12 @@ callBackend <- function(..., PACKAGE) {
 
 ## check the number of predictors to sequence for robust and groupwise LARS
 ## sequence predictors as long as there are twice as many observations
-checkSMax <- function(sMax, n, p) {
+checkSMax <- function(sMax, n, p, groupwise = FALSE) {
   sMax <- rep(as.integer(sMax), length.out=1)
-  bound <- min(p, if(is.na(sMax)) floor(n/2) else n-1)
+  if(groupwise) {
+    m <- length(p)
+    bound <- min(m, if(is.na(sMax)) floor(n/(2*mean(p))) else n-1)
+  } else bound <- min(p, if(is.na(sMax)) floor(n/2) else n-1)
   if(!isTRUE(is.finite(sMax)) || sMax > bound) sMax <- bound
   sMax
 }
@@ -122,6 +125,12 @@ dropCol <- function(x) {
   } else drop(x)
 }
 
+## construct blocks of original and lagged values for time series models
+fitBlocks <- function(x, y, h = 1, p = 2, intercept = FALSE) {
+  n <- length(y)
+  tsBlocks(x, y, p=p, subset=-((n-h+1):n), intercept=intercept)
+}
+
 # ## find argument names of functions
 # findArgNames <- function(..., removeDots = TRUE) {
 #   argNames <- unique(unlist(lapply(list(...), function(f) names(formals(f)))))
@@ -152,6 +161,13 @@ modelDf <- function(beta, tol = .Machine$double.eps^0.5) {
   length(which(abs(beta) > tol))
 }
 
+## construct blocks of original and lagged values for prediction from time 
+## series models
+newdataBlocks <- function(x, y, h = 1, p = 2, intercept = TRUE) {
+  n <- length(y)
+  tsBlocks(x, y, p=p, subset=(n-h-p+2):n, intercept=intercept)
+}
+
 ## find indices of h smallest observations
 partialOrder <- function(x, h) {
   # call C++ function
@@ -163,21 +179,6 @@ partialOrder <- function(x, h) {
 #   # call C++ function
 #   callBackend("R_partialSort", R_x=as.numeric(x), R_h=as.integer(h))
 # }
-
-## get pca scores corresponding to eigenvalues larger than 1
-pcaScores <- function(x, kMax) {
-  # check maximum number of principal components
-  d <- dim(x)
-  kMax <- rep(kMax, length.out=1)
-  if(!isTRUE(is.finite(kMax)) || !isTRUE(kMax <= min(d[2], d[1]-1))) {
-    kMax <- min(d[2], d[1]-1)
-  }
-  # fit PCA and extract scores
-  pca <- PCAgrid(x, k=kMax, scores=TRUE)
-  sdev <- pca$sdev
-  k <- which.min(sdev[sdev >= 1])
-  pca$scores[, seq_len(k), drop=FALSE]
-}
 
 ## remove intercept column from design matrix
 removeIntercept <- function(x, pos) {

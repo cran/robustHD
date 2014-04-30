@@ -1,10 +1,13 @@
 \name{critPlot}
 \alias{critPlot}
+\alias{critPlot.grplars}
 \alias{critPlot.perrySeqModel}
 \alias{critPlot.perrySparseLTS}
 \alias{critPlot.rlars}
 \alias{critPlot.seqModel}
 \alias{critPlot.sparseLTS}
+\alias{critPlot.tslars}
+\alias{critPlot.tslarsP}
 \title{Optimality criterion plot of a sequence of regression models}
 \usage{
   critPlot(x, ...)
@@ -12,6 +15,8 @@
   \method{critPlot}{seqModel} (x, size = c(0.5, 2), ...)
 
   \method{critPlot}{perrySeqModel} (x, ...)
+
+  \method{critPlot}{tslars} (x, p, ...)
 
   \method{critPlot}{sparseLTS} (x,
     fit = c("reweighted", "raw", "both"), size = c(0.5, 2),
@@ -22,6 +27,10 @@
 }
 \arguments{
   \item{x}{the model fit to be plotted.}
+
+  \item{p}{an integer giving the lag length for which to
+  produce the plot (the default is to use the optimal lag
+  length).}
 
   \item{fit}{a character string specifying for which
   estimator to produce the plot.  Possible values are
@@ -34,13 +43,16 @@
 
   \item{\dots}{for the generic function, additional
   arguments to be passed down to methods.  For the
+  \code{"tslars"} method, additional arguments to be passed
+  down to the \code{"seqModel"} method.  For the
   \code{"seqModel"} and \code{"sparseLTS"} methods,
   additional arguments to be passed down to
   \code{\link[ggplot2]{geom_line}} and
   \code{\link[ggplot2]{geom_point}}.  For the
   \code{"perrySeqModel"} and \code{"perrySparseLTS"}
-  methods, additional arguments to be passed down to
-  \code{\link[perry]{perryPlot}}.}
+  methods, additional arguments to be passed down to the
+  \code{\link[perry:perryPlot]{plot}} method for the
+  prediction error results.}
 }
 \value{
   An object of class \code{"ggplot"} (see
@@ -49,9 +61,9 @@
 \description{
   Produce a plot of the values of the optimality criterion
   for a sequence of regression models, such as submodels
-  along a robust least angle regression sequence, or sparse
-  least trimmed squares regression models for a grid of
-  values for the penalty parameter.
+  along a robust or groupwise least angle regression
+  sequence, or sparse least trimmed squares regression
+  models for a grid of values for the penalty parameter.
 }
 \examples{
 ## generate data
@@ -93,6 +105,9 @@ critPlot(fitSparseLTS, fit = "both")
 \seealso{
   \code{\link[ggplot2]{ggplot}},
   \code{\link[perry]{perryPlot}}, \code{\link{rlars}},
+  \code{\link{grplars}}, \code{\link{rgrplars}},
+  \code{\link{tslarsP}}, \code{\link{rtslarsP}},
+  \code{\link{tslars}}, \code{\link{rtslars}},
   \code{\link{sparseLTS}}
 }
 \keyword{hplot}

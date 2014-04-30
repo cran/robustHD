@@ -1,11 +1,16 @@
 \name{residuals.seqModel}
+\alias{residuals.grplars}
 \alias{residuals.rlars}
 \alias{residuals.seqModel}
 \alias{residuals.sparseLTS}
+\alias{residuals.tslars}
+\alias{residuals.tslarsP}
 \title{Extract residuals from a sequence of regression models}
 \usage{
   \method{residuals}{seqModel} (object, s = NA,
     standardized = FALSE, drop = !is.null(s), ...)
+
+  \method{residuals}{tslars} (object, p, ...)
 
   \method{residuals}{sparseLTS} (object, s = NA,
     fit = c("reweighted", "raw", "both"),
@@ -14,6 +19,10 @@
 \arguments{
   \item{object}{the model fit from which to extract
   residuals.}
+
+  \item{p}{an integer giving the lag length for which to
+  extract residuals (the default is to use the optimal lag
+  length).}
 
   \item{s}{for the \code{"seqModel"} method, an integer
   vector giving the steps of the submodels for which to
@@ -42,7 +51,10 @@
   \item{drop}{a logical indicating whether to reduce the
   dimension to a vector in case of only one step.}
 
-  \item{\dots}{additional arguments are currently ignored.}
+  \item{\dots}{for the \code{"tslars"} method, additional
+  arguments to be passed down to the \code{"seqModel"}
+  method.  For the other methods, additional arguments are
+  currently ignored.}
 }
 \value{
   A numeric vector or matrix containing the requested
@@ -50,9 +62,10 @@
 }
 \description{
   Extract residuals from a sequence of regression models,
-  such as submodels along a robust least angle regression
-  sequence, or sparse least trimmed squares regression
-  models for a grid of values for the penalty parameter.
+  such as submodels along a robust or groupwise least angle
+  regression sequence, or sparse least trimmed squares
+  regression models for a grid of values for the penalty
+  parameter.
 }
 \examples{
 ## generate data
@@ -96,6 +109,9 @@ head(residuals(fitSparseLTS, fit = "both", s = NULL))
 }
 \seealso{
   \code{\link[stats]{residuals}}, \code{\link{rlars}},
+  \code{\link{grplars}}, \code{\link{rgrplars}},
+  \code{\link{tslarsP}}, \code{\link{rtslarsP}},
+  \code{\link{tslars}}, \code{\link{rtslars}},
   \code{\link{sparseLTS}}
 }
 \keyword{regression}

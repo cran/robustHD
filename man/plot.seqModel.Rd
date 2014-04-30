@@ -1,9 +1,12 @@
 \name{plot.seqModel}
+\alias{plot.grplars}
 \alias{plot.perrySeqModel}
 \alias{plot.perrySparseLTS}
 \alias{plot.rlars}
 \alias{plot.seqModel}
 \alias{plot.sparseLTS}
+\alias{plot.tslars}
+\alias{plot.tslarsP}
 \title{Plot a sequence of regression models}
 \usage{
   \method{plot}{seqModel} (x,
@@ -11,6 +14,9 @@
 
   \method{plot}{perrySeqModel} (x,
     method = c("crit", "diagnostic"), ...)
+
+  \method{plot}{tslars} (x, p,
+    method = c("coefficients", "crit", "diagnostic"), ...)
 
   \method{plot}{sparseLTS} (x,
     method = c("coefficients", "crit", "diagnostic"), ...)
@@ -20,6 +26,10 @@
 }
 \arguments{
   \item{x}{the model fit to be plotted.}
+
+  \item{p}{an integer giving the lag length for which to
+  produce the plot (the default is to use the optimal lag
+  length).}
 
   \item{method}{a character string specifying the type of
   plot.  Possible values are \code{"coefficients"} to plot
@@ -39,10 +49,10 @@
 \description{
   Produce a plot of the coefficients, the values of the
   optimality criterion, or diagnostic plots for a sequence
-  of regression models, such as submodels along a robust
-  least angle regression sequence, or sparse least trimmed
-  squares regression models for a grid of values for the
-  penalty parameter.
+  of regression models, such as submodels along a robust or
+  groupwise least angle regression sequence, or sparse
+  least trimmed squares regression models for a grid of
+  values for the penalty parameter.
 }
 \examples{
 ## generate data
@@ -87,6 +97,9 @@ plot(fitSparseLTS, method = "diagnostic")
 \seealso{
   \code{\link{coefPlot}}, \code{\link{critPlot}},
   \code{\link{diagnosticPlot}}, \code{\link{rlars}},
+  \code{\link{grplars}}, \code{\link{rgrplars}},
+  \code{\link{tslarsP}}, \code{\link{rtslarsP}},
+  \code{\link{tslars}}, \code{\link{rtslars}},
   \code{\link{sparseLTS}}
 }
 \keyword{hplot}

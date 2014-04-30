@@ -7,13 +7,16 @@
 #' 
 #' Produce a plot of the coefficients, the values of the optimality criterion, 
 #' or diagnostic plots for a sequence of regression models, such as submodels 
-#' along a robust least angle regression sequence, or sparse least trimmed 
-#' squares regression models for a grid of values for the penalty parameter.
+#' along a robust or groupwise least angle regression sequence, or sparse least 
+#' trimmed squares regression models for a grid of values for the penalty 
+#' parameter.
 #' 
 #' @method plot seqModel
-#' @aliases plot.rlars
+#' @aliases plot.rlars plot.grplars plot.tslarsP
 #' 
 #' @param x  the model fit to be plotted.
+#' @param p  an integer giving the lag length for which to produce the plot 
+#' (the default is to use the optimal lag length).
 #' @param method  a character string specifying the type of plot.  Possible 
 #' values are \code{"coefficients"} to plot the coefficients from the submodels 
 #' via \code{\link{coefPlot}} (only for the \code{"seqModel"} and 
@@ -28,7 +31,9 @@
 #' @author Andreas Alfons
 #' 
 #' @seealso \code{\link{coefPlot}}, \code{\link{critPlot}}, 
-#' \code{\link{diagnosticPlot}}, \code{\link{rlars}}, \code{\link{sparseLTS}}
+#' \code{\link{diagnosticPlot}}, \code{\link{rlars}}, \code{\link{grplars}}, 
+#' \code{\link{rgrplars}}, \code{\link{tslarsP}}, \code{\link{rtslarsP}}, 
+#' \code{\link{tslars}}, \code{\link{rtslars}}, \code{\link{sparseLTS}}
 #' 
 #' @example inst/doc/examples/example-plot.R
 #' 
@@ -57,6 +62,21 @@ plot.perrySeqModel <- function(x, method = c("crit", "diagnostic"), ...) {
   ## call plot function
   if(method == "crit") critPlot(x, ...)
   else diagnosticPlot(x, ...)
+}
+
+
+#' @rdname plot.seqModel
+#' @method plot tslars
+#' @export
+
+plot.tslars <- function(x, p, method = c("coefficients", "crit", "diagnostic"), 
+                        ...) {
+  ## initializations
+  method <- match.arg(method)
+  ## call plot function
+  if(method == "coefficients") coefPlot(x, p=p, ...)
+  else if(method == "crit") critPlot(x, p=p, ...)
+  else diagnosticPlot(x, p=p, ...)
 }
 
 
@@ -172,7 +192,7 @@ coefify.sparseLTS <- function(model, fit = c("reweighted", "raw", "both"),
 #   m <- ncol(coef)        # number of variables
 #   sMax <- length(steps)  # number of steps
 #   vn <- colnames(coef)   # variable names
-  # obtain scale estimates for predictors
+#   obtain scale estimates for predictors
   n <- nrow(x)
   sigmaX <- apply(x, 2, function(x) {
     # standardize data
@@ -222,13 +242,15 @@ coefify.sparseLTS <- function(model, fit = c("reweighted", "raw", "both"),
 #' Coefficient plot of a sequence of regression models
 #' 
 #' Produce a plot of the coefficients from a sequence of regression models, 
-#' such as submodels along a robust least angle regression sequence, or sparse 
-#' least trimmed squares regression models for a grid of values for the penalty 
-#' parameter.
+#' such as submodels along a robust or groupwise least angle regression 
+#' sequence, or sparse least trimmed squares regression models for a grid of 
+#' values for the penalty parameter.
 #' 
-#' @aliases coefPlot.rlars
+#' @aliases coefPlot.rlars coefPlot.grplars coefPlot.tslarsP
 #' 
 #' @param x  the model fit to be plotted.
+#' @param p  an integer giving the lag length for which to produce the plot 
+#' (the default is to use the optimal lag length).
 #' @param fit  a character string specifying for which estimator to produce the 
 #' plot.  Possible values are \code{"reweighted"} (the default) for the 
 #' reweighted fits, \code{"raw"} for the raw fits, or \code{"both"} for both 
@@ -250,7 +272,8 @@ coefify.sparseLTS <- function(model, fit = c("reweighted", "raw", "both"),
 #' corresponding coefficient values from the last step (i.e., the number of 
 #' blank characters to be prepended to the label).
 #' @param \dots  for the generic function, additional arguments to be passed 
-#' down to methods.  For the \code{"seqModel"} and \code{"sparseLTS"} methods, 
+#' down to methods.  For the \code{"tslars"} method, additional arguments to be 
+#' passed down to the \code{"seqModel"} method.  For the other methods, 
 #' additional arguments to be passed down to \code{\link[ggplot2]{geom_line}} 
 #' and \code{\link[ggplot2]{geom_point}}.
 #' 
@@ -260,6 +283,8 @@ coefify.sparseLTS <- function(model, fit = c("reweighted", "raw", "both"),
 #' @author Andreas Alfons
 #' 
 #' @seealso \code{\link[ggplot2]{ggplot}}, \code{\link{rlars}}, 
+#' \code{\link{grplars}}, \code{\link{rgrplars}}, \code{\link{tslarsP}}, 
+#' \code{\link{rtslarsP}}, \code{\link{tslars}}, \code{\link{rtslars}}, 
 #' \code{\link{sparseLTS}}
 #' 
 #' @example inst/doc/examples/example-coefPlot.R
@@ -287,6 +312,30 @@ coefPlot.seqModel <- function(x, abscissa = c("step", "df"), zeros = FALSE,
   ## call workhorse function
   ggCoefPlot(coefData, labelData, abscissa=abscissa, size=size, 
              offset=offset, ...)
+}
+
+
+#' @rdname coefPlot
+#' @method coefPlot tslars
+#' @export
+
+coefPlot.tslars <- function(x, p, ...) {
+  ## check lag length
+  if(missing(p) || !is.numeric(p) || length(p) == 0) p <- x$pOpt
+  if(length(p) > 1) {
+    warning("multiple lag lengths not yet supported")
+    p <- p[1]
+  }
+  pMax <- x$pMax
+  if(p < 1) {
+    p <- 1
+    warning("lag length too small, using lag length 1")
+  } else if(p > pMax) {
+    p <- pMax
+    warning(sprintf("lag length too large, using maximum lag length %d", p))
+  }
+  ## call plot function for specified lag length
+  coefPlot(x$pFit[[p]], ...)
 }
 
 
@@ -363,13 +412,15 @@ ggCoefPlot <- function(coefData, labelData, abscissa = c("step", "df"),
 #' Optimality criterion plot of a sequence of regression models
 #' 
 #' Produce a plot of the values of the optimality criterion for a sequence of 
-#' regression models, such as submodels along a robust least angle regression 
-#' sequence, or sparse least trimmed squares regression models for a grid of 
-#' values for the penalty parameter.
+#' regression models, such as submodels along a robust or groupwise least angle 
+#' regression sequence, or sparse least trimmed squares regression models for 
+#' a grid of values for the penalty parameter.
 #' 
-#' @aliases critPlot.rlars
+#' @aliases critPlot.rlars critPlot.grplars critPlot.tslarsP
 #' 
 #' @param x  the model fit to be plotted.
+#' @param p  an integer giving the lag length for which to produce the plot 
+#' (the default is to use the optimal lag length).
 #' @param fit  a character string specifying for which estimator to produce the 
 #' plot.  Possible values are \code{"reweighted"} (the default) for the 
 #' reweighted fits, \code{"raw"} for the raw fits, or \code{"both"} for both 
@@ -377,11 +428,14 @@ ggCoefPlot <- function(coefData, labelData, abscissa = c("step", "df"),
 #' @param size  a numeric vector of length two giving the line width and the 
 #' point size, respectively.
 #' @param \dots  for the generic function, additional arguments to be passed 
-#' down to methods.  For the \code{"seqModel"} and \code{"sparseLTS"} methods, 
-#' additional arguments to be passed down to \code{\link[ggplot2]{geom_line}} 
-#' and \code{\link[ggplot2]{geom_point}}.    For the \code{"perrySeqModel"} and 
-#' \code{"perrySparseLTS"} methods, additional arguments to be passed down to 
-#' \code{\link[perry]{perryPlot}}.
+#' down to methods.  For the \code{"tslars"} method, additional arguments 
+#' to be passed down to the \code{"seqModel"} method.  For the 
+#' \code{"seqModel"} and \code{"sparseLTS"} methods, additional arguments 
+#' to be passed down to \code{\link[ggplot2]{geom_line}} and 
+#' \code{\link[ggplot2]{geom_point}}.    For the \code{"perrySeqModel"} and 
+#' \code{"perrySparseLTS"} methods, additional arguments to be passed down 
+#' to the \code{\link[perry:perryPlot]{plot}} method for the prediction error 
+#' results.
 #' 
 #' @return  
 #' An object of class \code{"ggplot"} (see \code{\link[ggplot2]{ggplot}}).
@@ -389,7 +443,9 @@ ggCoefPlot <- function(coefData, labelData, abscissa = c("step", "df"),
 #' @author Andreas Alfons
 #' 
 #' @seealso \code{\link[ggplot2]{ggplot}}, \code{\link[perry]{perryPlot}}, 
-#' \code{\link{rlars}}, \code{\link{sparseLTS}}
+#' \code{\link{rlars}}, \code{\link{grplars}}, \code{\link{rgrplars}}, 
+#' \code{\link{tslarsP}}, \code{\link{rtslarsP}}, \code{\link{tslars}}, 
+#' \code{\link{rtslars}}, \code{\link{sparseLTS}}
 #' 
 #' @example inst/doc/examples/example-critPlot.R
 #' 
@@ -438,6 +494,30 @@ critPlot.perrySeqModel <- function(x, ...) {
   }
   ## call local plot function
   localPlot(x, ...)
+}
+
+
+#' @rdname critPlot
+#' @method critPlot tslars
+#' @export
+
+critPlot.tslars <- function(x, p, ...) {
+  ## check lag length
+  if(missing(p) || !is.numeric(p) || length(p) == 0) p <- x$pOpt
+  if(length(p) > 1) {
+    warning("multiple lag lengths not yet supported")
+    p <- p[1]
+  }
+  pMax <- x$pMax
+  if(p < 1) {
+    p <- 1
+    warning("lag length too small, using lag length 1")
+  } else if(p > pMax) {
+    p <- pMax
+    warning(sprintf("lag length too large, using maximum lag length %d", p))
+  }
+  ## call plot function for specified lag length
+  critPlot(x$pFit[[p]], ...)
 }
 
 
@@ -581,7 +661,7 @@ labelify <- function(data, which, id.n = NULL) {
 #' with the largest distances from that line are identified by a label (the 
 #' observation number).  The default for \code{id.n} is the number of 
 #' regression outliers, i.e., the number of observations whose residuals are 
-#' too large (cf. \code{\link[=wt.sparseLTS]{wt}}).
+#' too large (cf. \code{\link{wt}}).
 #' 
 #' In the plots of the standardized residuals versus their index or the fitted 
 #' values, horizontal reference lines are drawn at 0 and +/-2.5.  The 
@@ -589,7 +669,7 @@ labelify <- function(data, which, id.n = NULL) {
 #' standardized residuals are identified by a label (the observation 
 #' number).  The default for \code{id.n} is the number of regression outliers, 
 #' i.e., the number of observations whose absolute residuals are too large (cf. 
-#' \code{\link[=wt.sparseLTS]{wt}}).
+#' \code{\link{wt}}).
 #' 
 #' For the regression diagnostic plot, the robust Mahalanobis distances of the 
 #' predictor variables are computed via the MCD based on only those predictors 
@@ -602,16 +682,18 @@ labelify <- function(data, which, id.n = NULL) {
 #' of the standardized residuals and/or largest robust Mahalanobis distances 
 #' are identified by a label (the observation number).  The default for 
 #' \code{id.n} is the number of all outliers: regression outliers (i.e., 
-#' observations whose absolute residuals are too large, cf. 
-#' \code{\link[=wt.sparseLTS]{wt}}) and leverage points (i.e., observations 
-#' with robust Mahalanobis distance larger than the 97.5\% quantile of the 
-#' \eqn{\chi^{2}}{chi-squared} distribution with \eqn{p} degrees of freedom).
+#' observations whose absolute residuals are too large, cf. \code{\link{wt}}) 
+#' and leverage points (i.e., observations with robust Mahalanobis distance 
+#' larger than the 97.5\% quantile of the \eqn{\chi^{2}}{chi-squared} 
+#' distribution with \eqn{p} degrees of freedom).
 #' 
-#' @aliases diagnosticPlot.rlars
+#' @aliases diagnosticPlot.rlars diagnosticPlot.grplars diagnosticPlot.tslarsP
 #' 
 #' @param x  the model fit for which to produce diagnostic plots, or a data 
 #' frame containing all necessary information for plotting (as generated by the 
 #' corresponding \code{\link[=fortify.seqModel]{fortify}} method).
+#' @param p  an integer giving the lag length for which to produce the plot 
+#' (the default is to use the optimal lag length).
 #' @param s  for the \code{"seqModel"} method, an integer vector giving 
 #' the steps of the submodels  for which to produce diagnostic plots (the 
 #' default is to use the optimal submodel).  For the \code{"sparseLTS"} method, 
@@ -622,6 +704,9 @@ labelify <- function(data, which, id.n = NULL) {
 #' diagnostic plots.  Possible values are \code{"reweighted"} (the default) for 
 #' diagnostic plots for the reweighted fit, \code{"raw"} for diagnostic plots 
 #' for the raw fit, or \code{"both"} for diagnostic plots for both fits.
+#' @param covArgs  a list of arguments to be passed to 
+#' \code{\link[robustbase]{covMcd}} for the regression diagnostic plot (see 
+#' \dQuote{Details}).
 #' @param which  a character string indicating which plot to show.  Possible 
 #' values are \code{"all"} (the default) for all of the following, \code{"rqq"} 
 #' for a normal Q-Q plot of the standardized residuals, \code{"rindex"} for a 
@@ -643,12 +728,13 @@ labelify <- function(data, which, id.n = NULL) {
 #' outliers, which can be different for the different plots.  See 
 #' \dQuote{Details} for more information.
 #' @param \dots  for the generic function, additional arguments to be passed 
-#' down to methods.  For the \code{"perrySeqModel"} and \code{"perrySparseLTS"} 
-#' method, additional arguments to be passed down to the \code{"seqModel"} and 
-#' \code{"sparseLTS"} method, respectively.  For the \code{"seqModel"} and 
-#' \code{"sparseLTS"} methods, additional arguments to be passed down to the 
-#' default method.  For the default method, additional arguments to be passed 
-#' down to \code{\link[ggplot2]{geom_point}}.
+#' down to methods.  For the \code{"tslars"} method, additional arguments to be 
+#' passed down to the \code{"seqModel"} method.  For the \code{"perrySeqModel"} 
+#' and \code{"perrySparseLTS"} method, additional arguments to be passed down 
+#' to the \code{"seqModel"} and \code{"sparseLTS"} method, respectively.  For 
+#' the \code{"seqModel"} and \code{"sparseLTS"} methods, additional arguments 
+#' to be passed down to the default method.  For the default method, additional 
+#' arguments to be passed down to \code{\link[ggplot2]{geom_point}}.
 #' 
 #' @return  
 #' If only one plot is requested, an object of class \code{"ggplot"} (see 
@@ -657,6 +743,8 @@ labelify <- function(data, which, id.n = NULL) {
 #' @author Andreas Alfons
 #' 
 #' @seealso \code{\link[ggplot2]{ggplot}}, \code{\link{rlars}}, 
+#' \code{\link{grplars}}, \code{\link{rgrplars}}, \code{\link{tslarsP}}, 
+#' \code{\link{rtslarsP}}, \code{\link{tslars}}, \code{\link{rtslars}}, 
 #' \code{\link{sparseLTS}}, \code{\link[robustbase:ltsPlot]{plot.lts}}
 #' 
 #' @example inst/doc/examples/example-diagnosticPlot.R
@@ -673,9 +761,9 @@ diagnosticPlot <- function(x, ...) UseMethod("diagnosticPlot")
 #' @method diagnosticPlot seqModel
 #' @export
 
-diagnosticPlot.seqModel <- function(x, s = NA, ...) {
+diagnosticPlot.seqModel <- function(x, s = NA, covArgs = list(), ...) {
   # call default method with all information required for plotting
-  diagnosticPlot(fortify(x, s=s), ...)
+  diagnosticPlot(fortify(x, s=s, covArgs=covArgs), ...)
 }
 
 
@@ -690,14 +778,38 @@ diagnosticPlot.perrySeqModel <- function(x, ...) {
 
 
 #' @rdname diagnosticPlot
+#' @method diagnosticPlot tslars
+#' @export
+
+diagnosticPlot.tslars <- function(x, p, ...) {
+  ## check lag length
+  if(missing(p) || !is.numeric(p) || length(p) == 0) p <- x$pOpt
+  if(length(p) > 1) {
+    warning("multiple lag lengths not yet supported")
+    p <- p[1]
+  }
+  pMax <- x$pMax
+  if(p < 1) {
+    p <- 1
+    warning("lag length too small, using lag length 1")
+  } else if(p > pMax) {
+    p <- pMax
+    warning(sprintf("lag length too large, using maximum lag length %d", p))
+  }
+  ## call plot function for specified lag length
+  diagnosticPlot(x$pFit[[p]], ...)
+}
+
+
+#' @rdname diagnosticPlot
 #' @method diagnosticPlot sparseLTS
 #' @export
 
 diagnosticPlot.sparseLTS <- function(x, s = NA, 
                                      fit = c("reweighted", "raw", "both"), 
-                                     ...) {
+                                     covArgs = list(), ...) {
   # call default method with all information required for plotting
-  diagnosticPlot(fortify(x, s=s, fit=fit), ...)
+  diagnosticPlot(fortify(x, s=s, fit=fit, covArgs=covArgs), ...)
 }
 
 
