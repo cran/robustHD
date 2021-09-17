@@ -6,16 +6,24 @@
 \alias{coef.grplars}
 \alias{coef.tslarsP}
 \alias{coef.tslars}
+\alias{coef.perrySeqModel}
 \alias{coef.sparseLTS}
 \title{Extract coefficients from a sequence of regression models}
 \usage{
-\method{coef}{seqModel}(object, s = NA, zeros = TRUE,
-  drop = !is.null(s), ...)
+\method{coef}{seqModel}(object, s = NA, zeros = TRUE, drop = !is.null(s), ...)
 
 \method{coef}{tslars}(object, p, ...)
 
-\method{coef}{sparseLTS}(object, s = NA, fit = c("reweighted", "raw",
-  "both"), zeros = TRUE, drop = !is.null(s), ...)
+\method{coef}{perrySeqModel}(object, ...)
+
+\method{coef}{sparseLTS}(
+  object,
+  s = NA,
+  fit = c("reweighted", "raw", "both"),
+  zeros = TRUE,
+  drop = !is.null(s),
+  ...
+)
 }
 \arguments{
 \item{object}{the model fit from which to extract coefficients.}

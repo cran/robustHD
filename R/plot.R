@@ -111,133 +111,6 @@ plot.perrySparseLTS <- function(x, method = c("crit", "diagnostic"), ...) {
 
 # ----------------------
 
-## supplement the coefficients in a model with other useful information
-## returns a data frame suitable for plotting with ggplot2
-
-coefify <- function(model, ...) UseMethod("coefify")
-
-coefify.seqModel <- function(model, zeros = FALSE, labels, ...) {
-  # prepare coefficients and labels
-  coef <- removeIntercept(t(coef(model, s=NULL)))
-  sigmaX <- model$sigmaX
-  if(!isTRUE(zeros)) {
-    keep <- apply(coef != 0, 2, any)
-    coef <- coef[, keep, drop=FALSE]
-    sigmaX <- sigmaX[keep]
-    if(!is.null(labels)) labels <- labels[keep]
-  }
-  # standardize coefficients
-  coef <- sweep(coef, 2, sigmaX, "/", check.margin=FALSE)
-  # prepare other information
-  m <- ncol(coef)          # number of variables
-  steps <- model$s         # step numbers
-  nsteps <- length(steps)  # number of steps
-  df <- model$df           # degrees of freedom
-  vn <- colnames(coef)     # variable names
-  # build data frame
-  coefData <- data.frame(step=rep.int(steps, m),
-                         df=rep.int(df, m), coefficient=as.numeric(coef),
-                         variable=factor(rep(vn, each=nsteps), levels=vn))
-  if(!is.null(labels))
-    coefData$label <- rep(as.character(labels), each=nsteps)
-  coefData
-}
-
-coefify.sparseLTS <- function(model, fit = c("reweighted", "raw", "both"),
-                              zeros = FALSE, labels, ...) {
-  # initializations
-  fit <- match.arg(fit)
-  zeros <- isTRUE(zeros)
-  coef <- removeIntercept(t(coef(model, s=NULL, fit=fit)))
-  df <- getComponent(model, "df", s=NULL, fit=fit)
-  # prepare coefficients and labels
-  if(!zeros) {
-    keep <- apply(coef != 0, 2, any)
-    coef <- coef[, keep, drop=FALSE]
-    if(!is.null(labels)) labels <- labels[keep]
-  }
-  # check if predictor data is available to compute scale estimates
-  if(is.null(x <- model$x)) {
-    x <- try(model.matrix(model$terms), silent=TRUE)
-    if(inherits(x, "try-error"))
-      stop("scale estimates of predictor variables not available")
-  }
-  x <- removeIntercept(x)
-  if(!zeros) x <- x[, keep, drop=FALSE]
-#   # obtain scale estimates for predictors
-#   lambda <- model$lambda      # tuning parameters
-#   steps <- seq_along(lambda)  # step numbers
-#   if(fit %in% c("reweighted", "both")) {
-#     cdelta <- model$cnp2
-#     wt <- as.matrix(weights(model, type="robustness", s=NULL, fit="raw"))
-#     sigmaX <- do.call(rbind,
-#                       lapply(steps, function(s) {
-#                         xOk <- x[wt[, s] == 1, , drop=FALSE]
-#                         apply(xOk, 2, sd) * cdelta[s]
-#                       }))
-#   } else sigmaX <- NULL
-#   if(fit %in% c("raw", "both")) {
-#     cdelta <- model$raw.cnp2
-#     best <- as.matrix(model$best)
-#     raw.sigmaX <- do.call(rbind,
-#                           lapply(steps, function(s) {
-#                             xBest <- x[best[, s], , drop=FALSE]
-#                             apply(xBest, 2, sd) * cdelta
-#                           }))
-#   } else raw.sigmaX <- NULL
-#   sigmaX <- rbind(sigmaX, raw.sigmaX)
-#   # standardize coeffients
-#   coef <- coef / sigmaX
-#   # prepare other information
-#   m <- ncol(coef)        # number of variables
-#   sMax <- length(steps)  # number of steps
-#   vn <- colnames(coef)   # variable names
-#   obtain scale estimates for predictors
-  n <- nrow(x)
-  sigmaX <- apply(x, 2, function(x) {
-    # standardize data
-    xs <- robStandardize(x, fallback=TRUE)
-    # detect good data points
-    ok <- which(abs(xs) < qnorm(0.9875))
-    nOk <- length(ok)
-    # compute consistency factor
-    if(nOk < n) {
-      qn <- qnorm((nOk+n)/ (2*n))  # quantile for consistency factor
-      cdelta <- 1 / sqrt(1-(2*n)/(nOk/qn)*dnorm(qn))
-    } else cdelta <- 1  # consistency factor not necessary
-    # compute standard deviation of good data points and multiply with
-    # consistency factor
-    sd(x[ok]) * cdelta
-  })
-  # standardize coeffients
-  coef <- sweep(coef, 2, sigmaX, "/", check.margin=FALSE)
-  # prepare other information
-  m <- ncol(coef)             # number of variables
-  lambda <- model$lambda      # tuning parameters
-  steps <- seq_along(lambda)  # step numbers
-  sMax <- length(steps)       # number of steps
-  vn <- colnames(coef)        # variable names
-  # build data frame
-  if(fit == "both") {
-    fits <- c("reweighted", "raw")
-    coefData <- data.frame(
-      fit=rep.int(factor(rep(fits, each=sMax), levels=fits), m),
-      lambda=rep.int(lambda, 2*m), step=rep.int(steps, 2*m),
-      df=rep.int(df, m), coefficient=as.numeric(coef),
-      variable=factor(rep(vn, each=2*sMax), levels=vn))
-    if(!is.null(labels))
-      coefData$label <- rep(as.character(labels), each=2*sMax)
-  } else {
-    coefData <- data.frame(
-      lambda=rep.int(lambda, m), step=rep.int(steps, m),
-      df=rep.int(df, m), coefficient=as.numeric(coef),
-      variable=factor(rep(vn, each=sMax), levels=vn))
-    if(!is.null(labels))
-      coefData$label <- rep(as.character(labels), each=sMax)
-  }
-  coefData
-}
-
 
 #' Coefficient plot of a sequence of regression models
 #'
@@ -248,16 +121,13 @@ coefify.sparseLTS <- function(model, fit = c("reweighted", "raw", "both"),
 #'
 #' @aliases coefPlot.rlars coefPlot.grplars coefPlot.tslarsP
 #'
-#' @param x  the model fit to be plotted.
-#' @param p  an integer giving the lag length for which to produce the plot
-#' (the default is to use the optimal lag length).
-#' @param fit  a character string specifying for which estimator to produce the
-#' plot.  Possible values are \code{"reweighted"} (the default) for the
-#' reweighted fits, \code{"raw"} for the raw fits, or \code{"both"} for both
-#' estimators.
+#' @param object  the model fit to be plotted.
 #' @param abscissa  a character string specifying what to plot on the
-#' \eqn{x}-axis.  Possible values are \code{"step"} for the step number (the
-#' default), or \code{"df"} for the degrees of freedom.
+#' \eqn{x}-axis.  For objects inheriting from class \code{"seqModel"}, possible
+#' values are \code{"step"} for the step number (the default), or \code{"df"}
+#' for the degrees of freedom.  For code{"sparseLTS"} objects, possible values
+#' are code{"lambda"} for the value of the penalty parameter (the default), or
+#' \code{"step"} for the step number.
 #' @param zeros  a logical indicating whether predictors that never enter the
 #' model and thus have zero coefficients should be included in the plot
 #' (\code{TRUE}) or omitted (\code{FALSE}, the default).  This is useful if the
@@ -267,15 +137,22 @@ coefify.sparseLTS <- function(model, fit = c("reweighted", "raw", "both"),
 #' point size and the label size, respectively.
 #' @param labels  an optional character vector containing labels for the
 #' predictors.  Plotting labels can be suppressed by setting this to
-#' \code{NULL}.
+#' \code{NA}.
 #' @param offset   an integer giving the offset of the labels from the
 #' corresponding coefficient values from the last step (i.e., the number of
 #' blank characters to be prepended to the label).
-#' @param \dots  for the generic function, additional arguments to be passed
-#' down to methods.  For the \code{"tslars"} method, additional arguments to be
-#' passed down to the \code{"seqModel"} method.  For the other methods,
-#' additional arguments to be passed down to \code{\link[ggplot2]{geom_line}}
-#' and \code{\link[ggplot2]{geom_point}}.
+#' @param p  an integer giving the lag length for which to produce the plot
+#' (the default is to use the optimal lag length).
+#' @param fit  a character string specifying for which estimator to produce the
+#' plot.  Possible values are \code{"reweighted"} (the default) for the
+#' reweighted fits, \code{"raw"} for the raw fits, or \code{"both"} for both
+#' estimators.
+#' @param facets  a faceting formula to override the default behavior.  If
+#' supplied, \code{\link[ggplot2]{facet_wrap}} or
+#' \code{\link[ggplot2]{facet_grid}} is called depending on whether the formula
+#' is one-sided or two-sided.
+#' @param \dots  additional arguments to be passed down, eventually to
+#' \code{\link[ggplot2]{geom_line}} and \code{\link[ggplot2]{geom_point}}.
 #'
 #' @return
 #' An object of class \code{"ggplot"} (see \code{\link[ggplot2]{ggplot}}).
@@ -294,25 +171,18 @@ coefify.sparseLTS <- function(model, fit = c("reweighted", "raw", "both"),
 #' @export
 #' @importFrom utils head tail
 
-coefPlot <- function(x, ...) UseMethod("coefPlot")
+coefPlot <- function(object, ...) UseMethod("coefPlot")
 
 
 #' @rdname coefPlot
 #' @method coefPlot seqModel
 #' @export
 
-coefPlot.seqModel <- function(x, abscissa = c("step", "df"), zeros = FALSE,
-                              size = c(0.5, 2, 4), labels, offset = 1, ...) {
-  ## initializations
-  if(missing(labels)) labels <- defaultLabels(x)  # default labels
-  ## extract coefficient data extended with other information
-  coefData <- coefify(x, zeros=zeros, labels=labels)
-  ## construct data frame for labels
-  maxStep <- max(coefData$step)
-  labelData <- coefData[coefData$step == maxStep, ]
-  ## call workhorse function
-  ggCoefPlot(coefData, labelData, abscissa=abscissa, size=size,
-             offset=offset, ...)
+coefPlot.seqModel <- function(object, zeros = FALSE, labels = NULL, ...) {
+  # extract all information required for plotting
+  setup <- setupCoefPlot(object, zeros = zeros, labels = labels)
+  # call method for object with all information required for plotting
+  coefPlot(setup, ...)
 }
 
 
@@ -320,23 +190,12 @@ coefPlot.seqModel <- function(x, abscissa = c("step", "df"), zeros = FALSE,
 #' @method coefPlot tslars
 #' @export
 
-coefPlot.tslars <- function(x, p, ...) {
-  ## check lag length
-  if(missing(p) || !is.numeric(p) || length(p) == 0) p <- x$pOpt
-  if(length(p) > 1) {
-    warning("multiple lag lengths not yet supported")
-    p <- p[1]
-  }
-  pMax <- x$pMax
-  if(p < 1) {
-    p <- 1
-    warning("lag length too small, using lag length 1")
-  } else if(p > pMax) {
-    p <- pMax
-    warning(sprintf("lag length too large, using maximum lag length %d", p))
-  }
-  ## call plot function for specified lag length
-  coefPlot(x$pFit[[p]], ...)
+coefPlot.tslars <- function(object, p, zeros = FALSE, labels = NULL, ...) {
+  # extract all information required for plotting
+  if (missing(p)) setup <- setupCoefPlot(object, zeros = zeros, labels = labels)
+  else setup <- setupCoefPlot(object, p = p, zeros = zeros, labels = labels)
+  # call method for object with all information required for plotting
+  coefPlot(setup, ...)
 }
 
 
@@ -344,71 +203,80 @@ coefPlot.tslars <- function(x, p, ...) {
 #' @method coefPlot sparseLTS
 #' @export
 
-coefPlot.sparseLTS <- function(x, fit = c("reweighted", "raw", "both"),
-                               abscissa = c("step", "df"), zeros = FALSE,
-                               size = c(0.5, 2, 4), labels, offset = 1, ...) {
-  ## initializations
-  fit <- match.arg(fit)
-  abscissa <- match.arg(abscissa)
-  if(missing(labels)) labels <- defaultLabels(x)  # default labels
-  ## extract coefficient data extended with other information
-  coefData <- coefify(x, fit=fit, zeros=zeros, labels=labels)
-  ## construct data frame for labels
-  maxX <- max(coefData[, abscissa])
-  labelData <- coefData[coefData[, abscissa] == maxX, ]
-  if(abscissa == "df") {
-    # maximum degree of freedom may occur in more than one step
-    # ensure that label is only drawn once for largest step number
-    by <- if(fit == "both") c("fit", "variable") else "variable"
-    keep <- split(rownames(labelData), labelData[, by])
-    keep <- sapply(keep, tail, 1)
-    labelData <- labelData[keep, ]
-  }
-  ## call workhorse function
-  p <- ggCoefPlot(coefData, labelData, abscissa=abscissa, size=size,
-                  offset=offset, ...)
-  if(fit == "both") {
-    # split plot into different panels
-    p <- p + facet_grid(. ~ fit)
-  }
-  p
+coefPlot.sparseLTS <- function(object, fit = c("reweighted", "raw", "both"),
+                               zeros = FALSE, labels = NULL, ...) {
+  # extract all information required for plotting
+  setup <- setupCoefPlot(object, fit = fit, zeros = zeros, labels = labels)
+  # call method for object with all information required for plotting
+  coefPlot(setup, ...)
 }
 
 
-## workhorse function
-ggCoefPlot <- function(coefData, labelData, abscissa = c("step", "df"),
-                       zeros = FALSE, size = c(0.5, 2, 4), labels, offset = 1,
-                       main = NULL, xlab, ylab, ..., mapping, data) {
+#' @rdname coefPlot
+#' @method coefPlot setupCoefPlot
+#' @export
+
+coefPlot.setupCoefPlot <- function(object, abscissa = NULL,
+                                   size = c(0.5, 2, 4), offset = 1,
+                                   facets = object$facets, ...) {
   # initializations
-  abscissa <- match.arg(abscissa)
+  if (is.null(abscissa)) abscissa <- object$abscissa[1]
+  else abscissa <- match.arg(abscissa, choices = object$abscissa)
   size <- as.numeric(size)
   size <- c(size, rep.int(NA, max(0, 3-length(size))))[1:3]  # ensure length 3
   size <- ifelse(is.na(size), eval(formals()$size), size)    # fill NA's
   # define default axis labels
-  if(missing(xlab))
-    xlab <- switch(abscissa, step="Step", df="Degrees of freedom")
-  if(missing(ylab)) ylab <- "Standardized coefficients"
+  xlab <- switch(abscissa, step = "Step", lambda = "lambda",
+                 df = "Degrees of freedom")
+  ylab <- "Standardized coefficients"
   # define aesthetic mapping for plotting coefficients
-  coefMapping <- aes_string(x=abscissa, y="coefficient", color="variable")
+  coefMapping <- aes_string(x = abscissa, y = "coefficient",
+                            color = "variable")
   # define aesthetic mapping for plotting x-axis grid and labels
-  offset <- paste(rep.int(" ", offset), collapse="")  # whitespace
-  labelData$label <- paste(offset, labelData$label, sep="")
-  labelMapping <- aes_string(x=abscissa, y="coefficient", label="label")
-  # draw minor grid lines for each step, but leave
-  # major grid lines and tick marks pretty
-  gridX <- unique(coefData[, abscissa])
+  if (object$includeLabels) {
+    offset <- paste(rep.int(" ", offset), collapse = "")  # whitespace
+    labelData <- object$labels
+    labelData$label <- paste(offset, labelData$label, sep = "")
+    labelMapping <- aes_string(x = abscissa, y = "coefficient",
+                               label = "label")
+  }
   # create plot
-  ggplot(coefData) +
-    geom_line(coefMapping, size=size[1], ...) +
-    geom_point(coefMapping, size=size[2], ...) +
-    geom_text(labelMapping, data=labelData,
-              hjust=0, size=size[3], alpha=0.4) +
-    scale_x_continuous(minor_breaks=gridX) +
-    theme(legend.position="none") +
-    labs(title=main, x=xlab, y=ylab)
+  p <- ggplot() +
+    local_geom_line(coefMapping, data = object$coefficients,
+                    size = size[1], ...) +
+    local_geom_point(coefMapping, data = object$coefficients,
+                     size = size[2], ...)
+  if (object$includeLabels) {
+    p <- p +
+      geom_text(labelMapping, data = labelData, hjust = 0,
+                size = size[3], alpha = 0.4)
+  }
+  p <- p +
+    labs(x = xlab, y = ylab)
+  if (abscissa == "lambda") p <- p + scale_x_reverse()
+  if (!is.null(facets)) {
+    # split plot into different panels
+    if (length(facets) == 2) p <- p + facet_wrap(facets)
+    else p <- p + facet_grid(facets)
+  }
+  # return plot
+  p
 }
 
+
+# local geoms to override defaults
+
+local_geom_line <- function(..., show.legend = FALSE) {
+  geom_line(..., show.legend = show.legend)
+}
+
+local_geom_point <- function(..., show.legend = FALSE) {
+  geom_point(..., show.legend = show.legend)
+}
+
+
 # ----------------------
+
 
 #' Optimality criterion plot of a sequence of regression models
 #'
@@ -419,27 +287,33 @@ ggCoefPlot <- function(coefData, labelData, abscissa = c("step", "df"),
 #'
 #' @aliases critPlot.rlars critPlot.grplars critPlot.tslarsP
 #'
-#' @param x  the model fit to be plotted.
+#' @param object  the model fit to be plotted, , or an object containing
+#' all necessary information for plotting (as generated by
+#' \code{\link{setupCritPlot}}).
+#' @param which  a character string specifying the type of plot.  Possible
+#' values are \code{"line"} (the default) to plot the (average) results for
+#' each model as a connected line, \code{"dot"} to create a dot plot,
+#' \code{"box"} to create a box plot, or \code{"density"} to create a smooth
+#' density plot.  Note that the last two plots are only available in case of
+#' prediction error estimation via repeated resampling.
 #' @param p  an integer giving the lag length for which to produce the plot
 #' (the default is to use the optimal lag length).
 #' @param fit  a character string specifying for which estimator to produce the
 #' plot.  Possible values are \code{"reweighted"} (the default) for the
 #' reweighted fits, \code{"raw"} for the raw fits, or \code{"both"} for both
 #' estimators.
-#' @param size  a numeric vector of length two giving the line width and the
-#' point size, respectively.
-#' @param \dots  for the generic function, additional arguments to be passed
-#' down to methods.  For the \code{"tslars"} method, additional arguments
-#' to be passed down to the \code{"seqModel"} method.  For the
-#' \code{"seqModel"} and \code{"sparseLTS"} methods, additional arguments
-#' to be passed down to \code{\link[ggplot2]{geom_line}} and
-#' \code{\link[ggplot2]{geom_point}}.    For the \code{"perrySeqModel"} and
-#' \code{"perrySparseLTS"} methods, additional arguments to be passed down
-#' to the \code{\link[perry:perryPlot]{plot}} method for the prediction error
-#' results.
+#' @param \dots  additional arguments to be passed down, eventually to
+#' \code{\link[ggplot2]{geom_line}}, \code{\link[ggplot2]{geom_pointrange}},
+#' \code{\link[ggplot2]{geom_boxplot}}, or \code{\link[ggplot2]{geom_density}}.
 #'
 #' @return
 #' An object of class \code{"ggplot"} (see \code{\link[ggplot2]{ggplot}}).
+#'
+#' @note Function \code{\link[perry]{perryPlot}} is used to create the plot,
+#' even if the optimality criterion does not correspond to resampling-based p
+#' rediction error estimation.  While this can be seen as as a misuse of its
+#' functionality, it ensures that all optimality criteria are displayed in the
+#' same way.
 #'
 #' @author Andreas Alfons
 #'
@@ -454,47 +328,18 @@ ggCoefPlot <- function(coefData, labelData, abscissa = c("step", "df"),
 #'
 #' @export
 
-critPlot <- function(x, ...) UseMethod("critPlot")
+critPlot <- function(object, ...) UseMethod("critPlot")
 
 
 #' @rdname critPlot
 #' @method critPlot seqModel
 #' @export
 
-critPlot.seqModel <- function(x, size = c(0.5, 2), ...) {
-  ## extract information from object
-  crit <- x$crit
-  if(is.null(crit)) stop("optimality criterion data not available")
-  ## construct data frame for ggplot2 graphics
-  critData <- fortify(crit, data=data.frame(step=x$s))
-  ## call workhorse function
-  ggCritPlot(critData, abscissa="step", size=size, ...)
-}
-
-
-#' @rdname critPlot
-#' @method critPlot perrySeqModel
-#' @export
-
-critPlot.perrySeqModel <- function(x, ...) {
-  ## local plot function for prediction error results to override defaults
-  localPlot <- function(x, method = c("line", "dot", "box", "density"),
-                        xlab = "Step", ...) {
-    # initializations
-    if(x$splits$R == 1) {
-      choices <- eval(formals()[["method"]])
-      if(identical(method, choices)) method <- "line"
-      else method <- match.arg(method, c("line", "dot"))
-    } else method <- match.arg(method)
-    # call perryPlot() for prediction error results
-    p <- perryPlot(x, method=method, xlab=xlab, ...)
-    if(method != "density") {
-      p <- p + scale_x_continuous(minor_breaks=fits(x))
-    }
-    p
-  }
-  ## call local plot function
-  localPlot(x, ...)
+critPlot.seqModel <- function(object, which = c("line", "dot"), ...) {
+  # extract all information required for plotting
+  setup <- setupCritPlot(object, which = which)
+  # call method for object with all information required for plotting
+  critPlot(setup, ...)
 }
 
 
@@ -502,23 +347,12 @@ critPlot.perrySeqModel <- function(x, ...) {
 #' @method critPlot tslars
 #' @export
 
-critPlot.tslars <- function(x, p, ...) {
-  ## check lag length
-  if(missing(p) || !is.numeric(p) || length(p) == 0) p <- x$pOpt
-  if(length(p) > 1) {
-    warning("multiple lag lengths not yet supported")
-    p <- p[1]
-  }
-  pMax <- x$pMax
-  if(p < 1) {
-    p <- 1
-    warning("lag length too small, using lag length 1")
-  } else if(p > pMax) {
-    p <- pMax
-    warning(sprintf("lag length too large, using maximum lag length %d", p))
-  }
-  ## call plot function for specified lag length
-  critPlot(x$pFit[[p]], ...)
+critPlot.tslars <- function(object, p, which = c("line", "dot"), ...) {
+  # extract all information required for plotting
+  if (missing(p)) setup <- setupCritPlot(object, which = which)
+  else setup <- setupCritPlot(object, p = p, which = which)
+  # call method for object with all information required for plotting
+  critPlot(setup, ...)
 }
 
 
@@ -526,22 +360,27 @@ critPlot.tslars <- function(x, p, ...) {
 #' @method critPlot sparseLTS
 #' @export
 
-critPlot.sparseLTS <- function(x, fit = c("reweighted", "raw", "both"),
-                               size = c(0.5, 2), ...) {
-  ## initializations
-  crit <- x$crit
-  if(is.null(crit)) stop("optimality criterion data not available")
-  fit <- match.arg(fit)
-  select <- if(fit == "both") NULL else fit
-  ## construct data frame for ggplot2 graphics
-  critData <- fortify(crit, data=data.frame(lambda=x$lambda), select=select)
-  ## call workhorse function
-  p <- ggCritPlot(critData, abscissa="lambda", size=size, ...)
-  if(fit == "both") {
-    # split plot into different panels
-    p <- p + facet_grid(. ~ fit)
-  }
-  p
+critPlot.sparseLTS <- function(object, which = c("line", "dot"),
+                               fit = c("reweighted", "raw", "both"),
+                               ...) {
+  # extract all information required for plotting
+  setup <- setupCritPlot(object, which = which, fit = fit)
+  # call method for object with all information required for plotting
+  critPlot(setup, ...)
+}
+
+
+#' @rdname critPlot
+#' @method critPlot perrySeqModel
+#' @export
+
+critPlot.perrySeqModel <- function(object,
+                                   which = c("line", "dot", "box", "density"),
+                                   ...) {
+  # extract all information required for plotting
+  setup <- setupCritPlot(object, which = which)
+  # call method for object with all information required for plotting
+  critPlot(setup, ...)
 }
 
 
@@ -549,71 +388,45 @@ critPlot.sparseLTS <- function(x, fit = c("reweighted", "raw", "both"),
 #' @method critPlot perrySparseLTS
 #' @export
 
-critPlot.perrySparseLTS <- function(x, fit = c("reweighted", "raw", "both"),
+critPlot.perrySparseLTS <- function(object,
+                                    which = c("line", "dot", "box", "density"),
+                                    fit = c("reweighted", "raw", "both"),
                                     ...) {
-  ## local plot function for prediction error results to override defaults
-  localPlot <- function(x, method = c("line", "dot", "box", "density"),
-                        fit = select, select = "reweighted", xlab = "lambda",
-                        ...) {
-    # initializations
-    if(x$splits$R == 1) {
-      choices <- eval(formals()[["method"]])
-      if(identical(method, choices)) method <- "line"
-      else method <- match.arg(method, c("line", "dot"))
-    } else method <- match.arg(method)
-    # call perryPlot() for prediction error results
-    if(is.null(fit)) p <- perryPlot(x, method=method, xlab=xlab, ...)
-    else {
-      p <- perryPlot(x, method=method, select=fit, facets=NULL, xlab=xlab, ...)
-    }
-    if(method != "density") {
-      p <- p + scale_x_reverse(minor_breaks=x$tuning[, "lambda"])
-    }
-    p
-  }
-  ## call local plot function
-  if(missing(fit)) localPlot(x, ...)
-  else {
-    fit <- match.arg(fit)
-    if(fit == "both") fit <- NULL
-    localPlot(x, fit=fit, ...)
-  }
+  # extract all information required for plotting
+  setup <- setupCritPlot(object, which = which, fit = fit)
+  # call method for object with all information required for plotting
+  critPlot(setup, ...)
 }
 
 
-## workhorse function
-ggCritPlot <- function(data, abscissa = c("index", "step", "lambda"),
-                       size = c(0.5, 2), main = NULL, xlab, ylab, ...,
-                       mapping) {
-  # initializations
-  abscissa <- match.arg(abscissa)
-  crit <- setdiff(names(data), c("fit", "index", "step", "lambda"))
-  size <- as.numeric(size)
-  size <- c(size, rep.int(NA, max(0, 2-length(size))))[1:2]  # ensure length 2
-  size <- ifelse(is.na(size), eval(formals()$size), size)    # fill NA's
-  # define default axis labels
-  if(missing(xlab)) {
-    xlab <- switch(abscissa, index="Index", step="Step", lambda="lambda")
-  }
-  if(missing(ylab)) ylab <- crit
-  # define aesthetic mapping for plotting coefficients
-  mapping <- aes_string(x=abscissa, y=crit)
-  # draw minor grid lines for each step, but leave
-  # major grid lines and tick marks pretty
-  gridX <- unique(data[, abscissa])
-  # create plot
-  scale_x <- if(abscissa == "lambda") scale_x_reverse else scale_x_continuous
-  ggplot(data, mapping) +
-    geom_line(size=size[1], ...) +
-    geom_point(size=size[2], ...) +
-    scale_x(minor_breaks=gridX) +
-    labs(title=main, x=xlab, y=ylab)
+#' @rdname critPlot
+#' @method critPlot setupCritPlot
+#' @export
+
+critPlot.setupCritPlot <- function(object, ...) {
+  # define x-axis label
+  tuning <- object$tuning
+  useTuning <- !is.null(tuning) && ncol(tuning) == 1
+  xlab <- if (useTuning) names(tuning) else "Step"
+  # make sure y-axis label is correct
+  if (inherits(object, "setupBICPlot")) ylab <- "BIC"
+  else if (inherits(object, "setupPerryPlot")) ylab <- "Prediction error"
+  else ylab <- "Optimality criterion"  # shouldn't happen
+  # initialize plot (this is a bit of a hack)
+  class(object) <- "setupPerryPlot"
+  p <- perryPlot(object, ...) + labs(x = xlab, y = ylab)
+  # reverse x-axis for penalty parameter of sparse LTS
+  if (xlab == "lambda") p <- p + scale_x_reverse()
+  # return plot
+  p
 }
+
 
 # ----------------------
 
+
 ## construct data frame for labels based on some order
-labelify <- function(data, which, id.n = NULL) {
+getLabelData <- function(data, which, id.n = NULL) {
   # initializations
   if(isTRUE(id.n < 1)) return(NULL)
   by <- intersect(c("step", "fit"), names(data))
@@ -691,23 +504,23 @@ labelify <- function(data, which, id.n = NULL) {
 #'
 #' @aliases diagnosticPlot.rlars diagnosticPlot.grplars diagnosticPlot.tslarsP
 #'
-#' @param x  the model fit for which to produce diagnostic plots, or a data
-#' frame containing all necessary information for plotting (as generated by the
-#' corresponding \code{\link[=fortify.seqModel]{fortify}} method).
-#' @param p  an integer giving the lag length for which to produce the plot
-#' (the default is to use the optimal lag length).
+#' @param object  the model fit for which to produce diagnostic plots, or an
+#' object containing all necessary information for plotting (as generated
+#' by \code{\link{setupDiagnosticPlot}}).
 #' @param s  for the \code{"seqModel"} method, an integer vector giving
 #' the steps of the submodels  for which to produce diagnostic plots (the
 #' default is to use the optimal submodel).  For the \code{"sparseLTS"} method,
 #' an integer vector giving the indices of the models for which to produce
 #' diagnostic plots (the default is to use the optimal model for each of the
 #' requested fits).
+#' @param covArgs  a list of arguments to be passed to
+#' \code{\link[robustbase]{covMcd}} for the regression diagnostic plot (see
+#' @param p  an integer giving the lag length for which to produce the plot
+#' (the default is to use the optimal lag length).
 #' @param fit  a character string specifying for which fit to produce
 #' diagnostic plots.  Possible values are \code{"reweighted"} (the default) for
 #' diagnostic plots for the reweighted fit, \code{"raw"} for diagnostic plots
 #' for the raw fit, or \code{"both"} for diagnostic plots for both fits.
-#' @param covArgs  a list of arguments to be passed to
-#' \code{\link[robustbase]{covMcd}} for the regression diagnostic plot (see
 #' \dQuote{Details}).
 #' @param which  a character string indicating which plot to show.  Possible
 #' values are \code{"all"} (the default) for all of the following, \code{"rqq"}
@@ -729,14 +542,8 @@ labelify <- function(data, which, id.n = NULL) {
 #' to be identified by a label.  The default is to use the number of identified
 #' outliers, which can be different for the different plots.  See
 #' \dQuote{Details} for more information.
-#' @param \dots  for the generic function, additional arguments to be passed
-#' down to methods.  For the \code{"tslars"} method, additional arguments to be
-#' passed down to the \code{"seqModel"} method.  For the \code{"perrySeqModel"}
-#' and \code{"perrySparseLTS"} method, additional arguments to be passed down
-#' to the \code{"seqModel"} and \code{"sparseLTS"} method, respectively.  For
-#' the \code{"seqModel"} and \code{"sparseLTS"} methods, additional arguments
-#' to be passed down to the default method.  For the default method, additional
-#' arguments to be passed down to \code{\link[ggplot2]{geom_point}}.
+#' @param \dots  additional arguments to be passed down, eventually to
+#' \code{\link[ggplot2]{geom_point}}.
 #'
 #' @return
 #' If only one plot is requested, an object of class \code{"ggplot"} (see
@@ -757,16 +564,18 @@ labelify <- function(data, which, id.n = NULL) {
 #' @import robustbase
 #' @importFrom grDevices devAskNewPage
 
-diagnosticPlot <- function(x, ...) UseMethod("diagnosticPlot")
+diagnosticPlot <- function(object, ...) UseMethod("diagnosticPlot")
 
 
 #' @rdname diagnosticPlot
 #' @method diagnosticPlot seqModel
 #' @export
 
-diagnosticPlot.seqModel <- function(x, s = NA, covArgs = list(), ...) {
-  # call default method with all information required for plotting
-  diagnosticPlot(fortify(x, s=s, covArgs=covArgs), ...)
+diagnosticPlot.seqModel <- function(object, s = NA, covArgs = list(), ...) {
+  # extract all information required for plotting
+  setup <- setupDiagnosticPlot(object, s = s, covArgs = covArgs)
+  # call method for object with all information required for plotting
+  diagnosticPlot(setup, ...)
 }
 
 
@@ -774,9 +583,11 @@ diagnosticPlot.seqModel <- function(x, s = NA, covArgs = list(), ...) {
 #' @method diagnosticPlot perrySeqModel
 #' @export
 
-diagnosticPlot.perrySeqModel <- function(x, ...) {
-  # call method for component 'finalModel'
-  diagnosticPlot(x$finalModel, ...)
+diagnosticPlot.perrySeqModel <- function(object, covArgs = list(), ...) {
+  # extract all information required for plotting
+  setup <- setupDiagnosticPlot(object, covArgs = covArgs)
+  # call method for object with all information required for plotting
+  diagnosticPlot(setup, ...)
 }
 
 
@@ -784,23 +595,12 @@ diagnosticPlot.perrySeqModel <- function(x, ...) {
 #' @method diagnosticPlot tslars
 #' @export
 
-diagnosticPlot.tslars <- function(x, p, ...) {
-  ## check lag length
-  if(missing(p) || !is.numeric(p) || length(p) == 0) p <- x$pOpt
-  if(length(p) > 1) {
-    warning("multiple lag lengths not yet supported")
-    p <- p[1]
-  }
-  pMax <- x$pMax
-  if(p < 1) {
-    p <- 1
-    warning("lag length too small, using lag length 1")
-  } else if(p > pMax) {
-    p <- pMax
-    warning(sprintf("lag length too large, using maximum lag length %d", p))
-  }
-  ## call plot function for specified lag length
-  diagnosticPlot(x$pFit[[p]], ...)
+diagnosticPlot.tslars <- function(object, p, s = NA, covArgs = list(), ...) {
+  # extract all information required for plotting
+  if (missing(p)) setup <- setupDiagnosticPlot(object, s = s, covArgs = covArgs)
+  else setup <- setupDiagnosticPlot(object, p = p, s = s, covArgs = covArgs)
+  # call method for object with all information required for plotting
+  diagnosticPlot(setup, ...)
 }
 
 
@@ -808,11 +608,13 @@ diagnosticPlot.tslars <- function(x, p, ...) {
 #' @method diagnosticPlot sparseLTS
 #' @export
 
-diagnosticPlot.sparseLTS <- function(x, s = NA,
+diagnosticPlot.sparseLTS <- function(object, s = NA,
                                      fit = c("reweighted", "raw", "both"),
                                      covArgs = list(), ...) {
-  # call default method with all information required for plotting
-  diagnosticPlot(fortify(x, s=s, fit=fit, covArgs=covArgs), ...)
+  # extract all information required for plotting
+  setup <- setupDiagnosticPlot(object, s = s, fit = fit, covArgs = covArgs)
+  # call method for object with all information required for plotting
+  diagnosticPlot(setup, ...)
 }
 
 
@@ -820,121 +622,132 @@ diagnosticPlot.sparseLTS <- function(x, s = NA,
 #' @method diagnosticPlot perrySparseLTS
 #' @export
 
-diagnosticPlot.perrySparseLTS <- function(x, ...) {
-  # call method for component 'finalModel'
-  diagnosticPlot(x$finalModel, ...)
+diagnosticPlot.perrySparseLTS <- function(object,
+                                          fit = c("reweighted", "raw", "both"),
+                                          covArgs = list(), ...) {
+  # extract all information required for plotting
+  setup <- setupDiagnosticPlot(object, fit = fit, covArgs = covArgs)
+  # call method for object with all information required for plotting
+  diagnosticPlot(setup, ...)
 }
 
 
 #' @rdname diagnosticPlot
-#' @method diagnosticPlot default
+#' @method diagnosticPlot setupDiagnosticPlot
 #' @export
 
-diagnosticPlot.default <- function(x, which = c("all", "rqq","rindex",
-                                                "rfit", "rdiag"),
-                                   ask = (which == "all"),
-                                   facets = attr(x, "facets"),
-                                   size = c(2, 4), id.n = NULL, ...) {
+diagnosticPlot.setupDiagnosticPlot <- function(object,
+                                               which = c("all", "rqq",
+                                                         "rindex", "rfit",
+                                                         "rdiag"),
+                                               ask = (which == "all"),
+                                               facets = object$facets,
+                                               size = c(2, 4), id.n = NULL,
+                                               ...) {
   # initializations
   which <- match.arg(which)
   size <- as.numeric(size)
   size <- c(size, rep.int(NA, max(0, 2-length(size))))[1:2]  # ensure length 2
   size <- ifelse(is.na(size), eval(formals()$size), size)    # fill NA's
   # call functions for selected plots
-  if(which == "all") {
+  if (which == "all") {
     oldAsk <- devAskNewPage(ask)  # ask for new page (if requested)
     on.exit(devAskNewPage(oldAsk))
     # residual Q-Q plot
-    p <- try(rqqPlot(x, facets=facets, size=size, id.n=id.n, ...),
-             silent=TRUE)
-    if(inherits(p, "try-error")) {
+    p <- try(rqqPlot(object, facets = facets, size = size, id.n = id.n, ...),
+             silent = TRUE)
+    if (inherits(p, "try-error")) {
       warn <- gsub("Error in", "In", p)
-      warning(warn, call.=FALSE)
+      warning(warn, call. = FALSE)
       res <- list()
     } else {
       print(p)
-      res <- list(rqq=p)
+      res <- list(rqq = p)
     }
     # residuals vs indices plot
-    p <- try(residualPlot(x, abscissa="index", facets=facets,
-                          size=size, id.n=id.n, ...), silent=TRUE)
-    if(inherits(p, "try-error")) {
+    p <- try(residualPlot(object, abscissa = "index", facets = facets,
+                          size = size, id.n = id.n, ...),
+             silent = TRUE)
+    if (inherits(p, "try-error")) {
       warn <- gsub("Error in", "In", p)
-      warning(warn, call.=FALSE)
+      warning(warn, call. = FALSE)
     } else {
       print(p)
       res$rindex <- p
     }
     # residuals vs fitted plot
-    p <- try(residualPlot(x, abscissa="fitted", facets=facets,
-                          size=size, id.n=id.n, ...), silent=TRUE)
-    if(inherits(p, "try-error")) {
+    p <- try(residualPlot(object, abscissa = "fitted", facets = facets,
+                          size = size, id.n = id.n, ...),
+             silent = TRUE)
+    if (inherits(p, "try-error")) {
       warn <- gsub("Error in", "In", p)
-      warning(warn, call.=FALSE)
+      warning(warn, call. = FALSE)
     } else {
       print(p)
       res$rfit <- p
     }
     # regression diagnostic plot
-    p <- try(rdiagPlot(x, facets=facets, size=size, id.n=id.n, ...),
-             silent=TRUE)
-    if(inherits(p, "try-error")) {
+    p <- try(rdiagPlot(object, facets = facets, size = size, id.n = id.n, ...),
+             silent = TRUE)
+    if (inherits(p, "try-error")) {
       warn <- gsub("Error in", "In", p)
-      warning(warn, call.=FALSE)
+      warning(warn, call. = FALSE)
     } else {
       print(p)
       res$rdiag <- p
     }
     invisible(res)
-  } else if(which == "rqq") {
+  } else if (which == "rqq") {
     # residual Q-Q plot
-    rqqPlot(x, facets=facets, size=size, id.n=id.n, ...)
-  } else if(which == "rindex") {
+    rqqPlot(object, facets = facets, size = size, id.n = id.n, ...)
+  } else if (which == "rindex") {
     # residuals vs indices plot
-    residualPlot(x, abscissa="index", facets=facets,
-                 size=size, id.n=id.n, ...)
-  } else if(which == "rfit") {
+    residualPlot(object, abscissa = "index", facets = facets,
+                 size = size, id.n = id.n, ...)
+  } else if (which == "rfit") {
     # residuals vs fitted plot
-    residualPlot(x, abscissa="fitted", facets=facets,
-                 size=size, id.n=id.n, ...)
-  } else if(which == "rdiag") {
+    residualPlot(object, abscissa = "fitted", facets = facets,
+                 size = size, id.n = id.n, ...)
+  } else if (which == "rdiag") {
     # regression diagnostic plot
-    rdiagPlot(x, facets=facets, size=size, id.n=id.n, ...)
+    rdiagPlot(object, facets = facets, size = size, id.n = id.n, ...)
   }
 }
 
 # ----------------------
 
-rqqPlot <- function(data, facets = attr(data, "facets"), size = c(2, 4),
-                    id.n = NULL, main, xlab, ylab, ..., mapping) {
+rqqPlot <- function(object, facets = object$facets, size = c(2, 4),
+                    id.n = NULL, ..., mapping) {
   # define aesthetic mapping for Q-Q plot
-  mapping <- aes_string(x="theoretical", y="residual", color="classification")
+  mapping <- aes_string(x = "theoretical", y = "residual",
+                        color = "Diagnostics")
   # extract data frame for reference line
-  lineData <- attr(data, "qqLine")
+  lineData <- object$qqLine
   # construct data frame for labels
-  labelData <- labelify(data, which="qqd", id.n=id.n)
+  labelData <- getLabelData(object$data, which = "qqd", id.n = id.n)
   # define default title and axis labels
-  if(missing(main)) main <- "Normal Q-Q plot"
-  if(missing(xlab)) xlab <- "Quantiles of the standard normal distribution"
-  if(missing(ylab)) ylab <- "Standardized residual"
+  main <- "Normal Q-Q plot"
+  xlab <- "Quantiles of the standard normal distribution"
+  ylab <- "Standardized residual"
   # create plot
-  p <- ggplot(data)
-  if(!is.null(lineData)) {
+  p <- ggplot(object$data)
+  if (!is.null(lineData)) {
     # add reference line
-    lineMapping <- aes_string(intercept="intercept", slope="slope")
-    p <- p + geom_abline(lineMapping, lineData, alpha=0.4)
+    lineMapping <- aes_string(intercept = "intercept", slope = "slope")
+    p <- p + geom_abline(lineMapping, lineData, alpha = 0.4)
   }
-  p <- p + geom_point(mapping, size=size[1], ...)
+  p <- p + geom_point(mapping, size = size[1], ...)
   if(!is.null(labelData)) {
     # add labels for observations with largest distances
-    labelMapping <- aes_string(x="theoretical", y="residual", label="index")
-    p <- p + geom_text(labelMapping, data=labelData,
-                       hjust=0, size=size[2], alpha=0.4)
+    labelMapping <- aes_string(x = "theoretical", y = "residual",
+                               label = "index")
+    p <- p + geom_text(labelMapping, data = labelData, hjust = 0,
+                       size = size[2], alpha = 0.4)
   }
-  p <- p + labs(title=main, x=xlab, y=ylab)
-  if(!is.null(facets)) {
+  p <- p + labs(title = main, x = xlab, y = ylab)
+  if (!is.null(facets)) {
     # split plot into different panels
-    if(length(facets) == 2) p <- p + facet_wrap(facets)
+    if (length(facets) == 2) p <- p + facet_wrap(facets)
     else p <- p + facet_grid(facets)
   }
   p
@@ -962,42 +775,38 @@ qqLine <- function(y) {
 
 ## plot standardized residuals vs indices or fitted values
 
-residualPlot <- function(data, abscissa = c("index", "fitted"),
-                         facets = attr(data, "facets"), size = c(2, 4),
-                         id.n = NULL, main, xlab, ylab, ..., mapping) {
+residualPlot <- function(object, abscissa = c("index", "fitted"),
+                         facets = object$facets, size = c(2, 4),
+                         id.n = NULL, ..., mapping) {
   ## initializations
   abscissa <- match.arg(abscissa)
   # define aesthetic mapping for residual plot
-  mapping <- aes_string(x=abscissa, y="residual", color="classification")
+  mapping <- aes_string(x = abscissa, y = "residual", color = "Diagnostics")
   ## construct data frame for labels
-  labelData <- labelify(data, which="residual", id.n=id.n)
+  labelData <- getLabelData(object$data, which = "residual", id.n = id.n)
   # define default title and axis labels
-  if(missing(main)) {
-    postfix <- switch(abscissa, index="indices", fitted="fitted values")
-    main <- paste("Residuals vs", postfix)
-  }
-  if(missing(xlab)) {
-    xlab <- switch(abscissa, index="Index", fitted="Fitted value")
-  }
-  if(missing(ylab)) ylab <- "Standardized residual"
+  postfix <- switch(abscissa, index = "indices", fitted = "fitted values")
+  main <- paste("Residuals vs", postfix)
+  xlab <- switch(abscissa, index = "Index", fitted = "Fitted value")
+  ylab <- "Standardized residual"
   # ensure that horizontal grid line is drawn at 0
-  breaks <- union(pretty(data[, "residual"]), 0)
+  breaks <- union(pretty(object$data[, "residual"]), 0)
   # create plot
-  p <- ggplot(data) +
-    geom_hline(aes(yintercept=-2.5), alpha=0.4) +
-    geom_hline(aes(yintercept=2.5), alpha=0.4) +
-    geom_point(mapping, size=size[1], ...)
-  if(!is.null(labelData)) {
+  p <- ggplot(object$data) +
+    geom_hline(aes(yintercept = -2.5), alpha = 0.4) +
+    geom_hline(aes(yintercept = 2.5), alpha = 0.4) +
+    geom_point(mapping, size = size[1], ...)
+  if (!is.null(labelData)) {
     # add labels for observations with largest distances
-    labelMapping <- aes_string(x=abscissa, y="residual", label="index")
-    p <- p + geom_text(labelMapping, data=labelData,
-                       hjust=0, size=size[2], alpha=0.4)
+    labelMapping <- aes_string(x = abscissa, y = "residual", label = "index")
+    p <- p + geom_text(labelMapping, data = labelData, hjust = 0,
+                       size = size[2], alpha = 0.4)
   }
-  p <- p + scale_y_continuous(breaks=breaks) +
-    labs(title=main, x=xlab, y=ylab)
-  if(!is.null(facets)) {
+  p <- p + scale_y_continuous(breaks = breaks) +
+    labs(title = main, x = xlab, y = ylab)
+  if (!is.null(facets)) {
     # split plot into different panels
-    if(length(facets) == 2) p <- p + facet_wrap(facets)
+    if (length(facets) == 2) p <- p + facet_wrap(facets)
     else p <- p + facet_grid(facets)
   }
   p
@@ -1007,55 +816,57 @@ residualPlot <- function(data, abscissa = c("index", "fitted"),
 
 ## plot robust distances (regression diagnostic plot)
 
-rdiagPlot <- function(data, facets = attr(data, "facets"), size = c(2, 4),
-                      id.n = NULL, main, xlab, ylab, ..., mapping) {
+rdiagPlot <- function(object, facets = object$facets, size = c(2, 4),
+                      id.n = NULL, ..., mapping) {
   ## initializations
+  # extract data frame with main information
+  data <- object$data
   # extract data frame for vertical reference line
-  lineData <- attr(data, "q")
+  lineData <- object$q
   # check if robust distances are available
   msg <- "robust distances not available"
   by <- intersect(c("step", "fit"), names(data))
-  if(length(by) > 0) {
-    indices <- split(seq_len(nrow(data)), data[, by, drop=FALSE])
+  if (length(by) > 0) {
+    indices <- split(seq_len(nrow(data)), data[, by, drop = FALSE])
     onlyNA <- sapply(indices, function(i) all(is.na(data[i, "rd"])))
-    if(all(onlyNA)) stop(msg)
-    if(any(onlyNA)) {
+    if (all(onlyNA)) stop(msg)
+    if (any(onlyNA)) {
       indices <- do.call(c, unname(indices[onlyNA]))
-      data <- data[-indices, , drop=FALSE]
-      lineData <- lineData[!onlyNA, , drop=FALSE]
+      data <- data[-indices, , drop = FALSE]
+      lineData <- lineData[!onlyNA, , drop = FALSE]
       warning(msg, " for some submodels")
     }
   } else {
     onlyNA <- all(is.na(data[, "rd"]))
-    if(onlyNA) stop(msg)
+    if (onlyNA) stop(msg)
   }
   # define aesthetic mapping for regression diagnostic plot
-  mapping <- aes_string(x="rd", y="residual", color="classification")
+  mapping <- aes_string(x = "rd", y = "residual", color = "Diagnostics")
   ## construct data frame for labels
-  labelData <- labelify(data, which="xyd", id.n=id.n)
+  labelData <- getLabelData(data, which = "xyd", id.n = id.n)
   # define default title and axis labels
-  if(missing(main)) main <- "Regression diagnostic plot"
-  if(missing(xlab)) xlab <- "Robust distance computed by MCD"
-  if(missing(ylab)) ylab <- "Standardized residual"
+  main <- "Regression diagnostic plot"
+  xlab <- "Robust distance computed by MCD"
+  ylab <- "Standardized residual"
   # create plot
   p <- ggplot(data) +
-    geom_hline(aes(yintercept=-2.5), alpha=0.4) +
-    geom_hline(aes(yintercept=2.5), alpha=0.4)
+    geom_hline(aes(yintercept = -2.5), alpha = 0.4) +
+    geom_hline(aes(yintercept = 2.5), alpha = 0.4)
   if(!is.null(lineData)) {
     # add reference line
-    p <- p + geom_vline(aes_string(xintercept="q"), lineData, alpha=0.4)
+    p <- p + geom_vline(aes_string(xintercept = "q"), lineData, alpha = 0.4)
   }
-  p <- p + geom_point(mapping, size=size[1], ...)
-  if(!is.null(labelData)) {
+  p <- p + geom_point(mapping, size = size[1], ...)
+  if (!is.null(labelData)) {
     # add labels for observations with largest distances
-    labelMapping <- aes_string(x="rd", y="residual", label="index")
-    p <- p + geom_text(labelMapping, data=labelData,
-                       hjust=0, size=size[2], alpha=0.4)
+    labelMapping <- aes_string(x = "rd", y = "residual", label = "index")
+    p <- p + geom_text(labelMapping, data = labelData, hjust = 0,
+                       size = size[2], alpha = 0.4)
   }
-  p <- p + labs(title=main, x=xlab, y=ylab)
-  if(!is.null(facets)) {
+  p <- p + labs(title = main, x = xlab, y =  ylab)
+  if (!is.null(facets)) {
     # split plot into different panels
-    if(length(facets) == 2) p <- p + facet_wrap(facets)
+    if (length(facets) == 2) p <- p + facet_wrap(facets)
     else p <- p + facet_grid(facets)
   }
   p

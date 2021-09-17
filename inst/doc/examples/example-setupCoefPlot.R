@@ -19,17 +19,17 @@ x[i,] <- x[i,] + 5              # bad leverage points
 ## robust LARS
 # fit model
 fitRlars <- rlars(x, y, sMax = 10)
-# extract residuals
-residuals(fitRlars)
-head(residuals(fitRlars, s = 1:5))
+# extract information for plotting
+setup <- setupCoefPlot(fitRlars)
+coefPlot(setup)
 
 
 ## sparse LTS over a grid of values for lambda
 # fit model
 frac <- seq(0.2, 0.05, by = -0.05)
 fitSparseLTS <- sparseLTS(x, y, lambda = frac, mode = "fraction")
-# extract residuals
-residuals(fitSparseLTS)
-head(residuals(fitSparseLTS, fit = "both"))
-head(residuals(fitSparseLTS, s = NULL))
-head(residuals(fitSparseLTS, fit = "both", s = NULL))
+# extract information for plotting
+setup1 <- setupCoefPlot(fitSparseLTS)
+coefPlot(setup1)
+setup2 <- setupCoefPlot(fitSparseLTS, fit = "both")
+coefPlot(setup2)

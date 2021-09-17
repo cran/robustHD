@@ -8,31 +8,37 @@
 \alias{coefPlot.seqModel}
 \alias{coefPlot.tslars}
 \alias{coefPlot.sparseLTS}
+\alias{coefPlot.setupCoefPlot}
 \title{Coefficient plot of a sequence of regression models}
 \usage{
-coefPlot(x, ...)
+coefPlot(object, ...)
 
-\method{coefPlot}{seqModel}(x, abscissa = c("step", "df"),
-  zeros = FALSE, size = c(0.5, 2, 4), labels, offset = 1, ...)
+\method{coefPlot}{seqModel}(object, zeros = FALSE, labels = NULL, ...)
 
-\method{coefPlot}{tslars}(x, p, ...)
+\method{coefPlot}{tslars}(object, p, zeros = FALSE, labels = NULL, ...)
 
-\method{coefPlot}{sparseLTS}(x, fit = c("reweighted", "raw", "both"),
-  abscissa = c("step", "df"), zeros = FALSE, size = c(0.5, 2, 4),
-  labels, offset = 1, ...)
+\method{coefPlot}{sparseLTS}(
+  object,
+  fit = c("reweighted", "raw", "both"),
+  zeros = FALSE,
+  labels = NULL,
+  ...
+)
+
+\method{coefPlot}{setupCoefPlot}(
+  object,
+  abscissa = NULL,
+  size = c(0.5, 2, 4),
+  offset = 1,
+  facets = object$facets,
+  ...
+)
 }
 \arguments{
-\item{x}{the model fit to be plotted.}
+\item{object}{the model fit to be plotted.}
 
-\item{\dots}{for the generic function, additional arguments to be passed
-down to methods.  For the \code{"tslars"} method, additional arguments to be
-passed down to the \code{"seqModel"} method.  For the other methods,
-additional arguments to be passed down to \code{\link[ggplot2]{geom_line}}
-and \code{\link[ggplot2]{geom_point}}.}
-
-\item{abscissa}{a character string specifying what to plot on the
-\eqn{x}-axis.  Possible values are \code{"step"} for the step number (the
-default), or \code{"df"} for the degrees of freedom.}
+\item{\dots}{additional arguments to be passed down, eventually to
+\code{\link[ggplot2]{geom_line}} and \code{\link[ggplot2]{geom_point}}.}
 
 \item{zeros}{a logical indicating whether predictors that never enter the
 model and thus have zero coefficients should be included in the plot
@@ -40,16 +46,9 @@ model and thus have zero coefficients should be included in the plot
 number of predictors is much larger than the number of observations, in
 which case many coefficients are never nonzero.}
 
-\item{size}{a numeric vector of length three giving the line width, the
-point size and the label size, respectively.}
-
 \item{labels}{an optional character vector containing labels for the
 predictors.  Plotting labels can be suppressed by setting this to
-\code{NULL}.}
-
-\item{offset}{an integer giving the offset of the labels from the
-corresponding coefficient values from the last step (i.e., the number of
-blank characters to be prepended to the label).}
+\code{NA}.}
 
 \item{p}{an integer giving the lag length for which to produce the plot
 (the default is to use the optimal lag length).}
@@ -58,6 +57,25 @@ blank characters to be prepended to the label).}
 plot.  Possible values are \code{"reweighted"} (the default) for the
 reweighted fits, \code{"raw"} for the raw fits, or \code{"both"} for both
 estimators.}
+
+\item{abscissa}{a character string specifying what to plot on the
+\eqn{x}-axis.  For objects inheriting from class \code{"seqModel"}, possible
+values are \code{"step"} for the step number (the default), or \code{"df"}
+for the degrees of freedom.  For code{"sparseLTS"} objects, possible values
+are code{"lambda"} for the value of the penalty parameter (the default), or
+\code{"step"} for the step number.}
+
+\item{size}{a numeric vector of length three giving the line width, the
+point size and the label size, respectively.}
+
+\item{offset}{an integer giving the offset of the labels from the
+corresponding coefficient values from the last step (i.e., the number of
+blank characters to be prepended to the label).}
+
+\item{facets}{a faceting formula to override the default behavior.  If
+supplied, \code{\link[ggplot2]{facet_wrap}} or
+\code{\link[ggplot2]{facet_grid}} is called depending on whether the formula
+is one-sided or two-sided.}
 }
 \value{
 An object of class \code{"ggplot"} (see \code{\link[ggplot2]{ggplot}}).
