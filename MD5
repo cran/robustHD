@@ -1,6 +1,6 @@
-2bc18b61db7eab8b30ab588acfe5a3db *DESCRIPTION
+fb9e9bdc2bd7a1cb0cb4472424b8e510 *DESCRIPTION
 a5ae6681dd19472fce1b42ec6dc5cbde *NAMESPACE
-2c85e07450fd15ca6506aac8704cc7c2 *NEWS
+53f531d8717fdb3077c34bb8543bff80 *NEWS
 609467e9f5ed31926c6679b6bcaa70ff *R/AIC.R
 5c24915efe98fa9cb29859d7e95a520b *R/accessors.R
 44b899a7c153b9a0e1b68b67cf2ed113 *R/coef.R
@@ -32,10 +32,11 @@ f02cdac64a62a4f6d877a3ee2fc19c0f *R/tslarsP.R
 c50d97a8b251cf9d875578ad9a44986e *R/utils.R
 4f15926635ad2a6f4df452c5fe0416e4 *R/weights.R
 9e109944ca1b9ac7e14a3ffd409cdae3 *R/winsorize.R
-7ac6dc16f7a1403042cb602ec724e03c *build/partial.rdb
-93fdc64acb583ff21f0e3ca11941b5e4 *data/TopGear.RData
+a356e488e28d8136868ba120bcce352d *build/partial.rdb
+d6bce0fdc35a863aec3591de445f9205 *data/TopGear.RData
 c7705782f5baaba586dbbc2f42166f3e *data/datalist
-cfa73225ecd3c033d789ae3b86471a55 *data/nci60.RData
+e20bf632854c47889e9e21715d1b1c4f *data/nci60.RData
+ed16d717cf715d94ed9e3b5c9ed90367 *inst/CITATION
 5fe51dbf3f0475686a8b88011244c087 *inst/doc/examples/example-AIC.R
 111dd63edb95a153d8f3fb8f4ad72dad *inst/doc/examples/example-coef.R
 166b7d6335e500e28c297ababad22c4c *inst/doc/examples/example-coefPlot.R
@@ -74,7 +75,7 @@ f8705c529c277b6ceecb902fef81bd3c *man/lambda0.Rd
 ccf44724f26378bba9c5b70b5d99e081 *man/residuals.seqModel.Rd
 c783ef60fd998748e31862d179c1a4fa *man/rlars.Rd
 3c22a348646a7952d2d8781a1d2e1e38 *man/robustHD-deprecated.Rd
-3ee7d95ba842abc9b0c462dc3acc0b89 *man/robustHD-package.Rd
+f7ab24933fb9366cc9a1a81fc9354e58 *man/robustHD-package.Rd
 fb9ab59ac7a21d3b1dc487da13843be9 *man/setupCoefPlot.Rd
 e9c92362a92d1137a36a5d4893d8992a *man/setupCritPlot.Rd
 5528d4b4d8bd7a98520d2b8acdcc83ff *man/setupDiagnosticPlot.Rd
