@@ -220,6 +220,7 @@ rlars(x, y, sMax = 10)
 Khan, J.A., Van Aelst, S. and Zamar, R.H. (2007) Robust linear model
 selection based on least angle regression. \emph{Journal of the American
 Statistical Association}, \bold{102}(480), 1289--1299.
+\doi{10.1198/016214507000000950}
 }
 \seealso{
 \code{\link[=coef.seqModel]{coef}},
@@ -227,6 +228,7 @@ Statistical Association}, \bold{102}(480), 1289--1299.
 \code{\link[=plot.seqModel]{plot}},
 \code{\link[=predict.seqModel]{predict}},
 \code{\link[=residuals.seqModel]{residuals}},
+\code{\link[=rstandard.seqModel]{rstandard}},
 \code{\link[robustbase]{lmrob}}
 }
 \author{

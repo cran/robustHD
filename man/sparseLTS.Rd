@@ -278,7 +278,7 @@ sparseLTS(x, y, lambda = frac, mode = "fraction")
 \references{
 Alfons, A., Croux, C. and Gelper, S. (2013) Sparse least trimmed squares
 regression for analyzing high-dimensional large data sets. \emph{The Annals
-of Applied Statistics}, \bold{7}(1), 226--248.
+of Applied Statistics}, \bold{7}(1), 226--248. \doi{10.1214/12-AOAS575}
 }
 \seealso{
 \code{\link[=coef.sparseLTS]{coef}},
@@ -286,6 +286,7 @@ of Applied Statistics}, \bold{7}(1), 226--248.
 \code{\link[=plot.sparseLTS]{plot}},
 \code{\link[=predict.sparseLTS]{predict}},
 \code{\link[=residuals.sparseLTS]{residuals}},
+\code{\link[=rstandard.sparseLTS]{rstandard}},
 \code{\link[=weights.sparseLTS]{weights}},
 \code{\link[robustbase]{ltsReg}}
 }

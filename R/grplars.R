@@ -152,13 +152,14 @@
 #' @references
 #' Alfons, A., Croux, C. and Gelper, S. (2016) Robust groupwise least angle
 #' regression. \emph{Computational Statistics & Data Analysis}, \bold{93},
-#' 421--435.
+#' 421--435. \doi{10.1016/j.csda.2015.02.007}
 #'
 #' @seealso \code{\link[=coef.seqModel]{coef}},
 #' \code{\link[=fitted.seqModel]{fitted}},
 #' \code{\link[=plot.seqModel]{plot}},
 #' \code{\link[=predict.seqModel]{predict}},
 #' \code{\link[=residuals.seqModel]{residuals}},
+#' \code{\link[=rstandard.seqModel]{rstandard}},
 #' \code{\link[robustbase]{lmrob}}
 #'
 #' @example inst/doc/examples/example-rgrplars.R

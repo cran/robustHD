@@ -39,6 +39,7 @@
 #'
 #' @keywords hplot
 #'
+#' @import ggplot2
 #' @export
 
 plot.seqModel <- function(x, method = c("coefficients", "crit", "diagnostic"),
@@ -168,8 +169,9 @@ plot.perrySparseLTS <- function(x, method = c("crit", "diagnostic"), ...) {
 #'
 #' @keywords hplot
 #'
-#' @export
+#' @import ggplot2
 #' @importFrom utils head tail
+#' @export
 
 coefPlot <- function(object, ...) UseMethod("coefPlot")
 
@@ -486,21 +488,35 @@ getLabelData <- function(data, which, id.n = NULL) {
 #' \code{\link[=weights.sparseLTS]{weights}}).
 #'
 #' For the regression diagnostic plot, the robust Mahalanobis distances of the
-#' predictor variables are computed via the MCD based on only those predictors
-#' with non-zero coefficients (see
-#' \code{\link[robustbase]{covMcd}}).  Horizontal reference lines are drawn at
-#' +/-2.5 and a vertical reference line is drawn at the upper 97.5\% quantile
-#' of the \eqn{\chi^{2}}{chi-squared} distribution with \eqn{p} degrees of
-#' freedom, where \eqn{p} denotes the number of predictors with non-zero
-#' coefficients.  The \code{id.n} observations with the largest absolute values
-#' of the standardized residuals and/or largest robust Mahalanobis distances
-#' are identified by a label (the observation number).  The default for
-#' \code{id.n} is the number of all outliers: regression outliers (i.e.,
-#' observations whose absolute residuals are too large, cf.
+#' predictor variables are computed via the minimum covariance determinant
+#' (MCD) estimator based on only those predictors with non-zero coefficients
+#' (see \code{\link[robustbase]{covMcd}}).  Horizontal reference lines are
+#' drawn at +/-2.5 and a vertical reference line is drawn at the upper 97.5\%
+#' quantile of the \eqn{\chi^{2}}{chi-squared} distribution with \eqn{p}
+#' degrees of freedom, where \eqn{p} denotes the number of predictors with
+#' non-zero coefficients.  The \code{id.n} observations with the largest
+#' absolute values of the standardized residuals and/or largest robust
+#' Mahalanobis distances are identified by a label (the observation number).
+#' The default for \code{id.n} is the number of all outliers: regression
+#' outliers (i.e., observations whose absolute residuals are too large, cf.
 #' \code{\link[=weights.sparseLTS]{weights}}) and leverage points (i.e.,
 #' observations with robust Mahalanobis distance larger than the 97.5\%
 #' quantile of the \eqn{\chi^{2}}{chi-squared} distribution with \eqn{p}
 #' degrees of freedom).
+#'
+#' Note that the argument \code{alpha} for controlling the subset size
+#' behaves differently for \code{\link{sparseLTS}} than for
+#' \code{\link[robustbase]{covMcd}}.  For \code{\link{sparseLTS}}, the subset
+#' size \eqn{h} is determined by the fraction \code{alpha} of the number of
+#' observations \eqn{n}.  For \code{\link[robustbase]{covMcd}}, on the other
+#' hand, the subset size also depends on the number of variables \eqn{p} (see
+#' \code{\link[robustbase]{h.alpha.n}}).  However, the \code{"sparseLTS"} and
+#' \code{"perrySparseLTS"} methods attempt to compute the MCD using the same
+#' subset size that is used to compute the sparse least trimmed squares
+#' regressions.  This may not be possible if the number of selected variables
+#' is large compared to the number of observations. In such cases,
+#' \code{\link{setupDiagnosticPlot}} returns \code{NA}s for the robust
+#' Mahalanobis distances, and the regression diagnostic plot fails.
 #'
 #' @aliases diagnosticPlot.rlars diagnosticPlot.grplars diagnosticPlot.tslarsP
 #'
@@ -560,9 +576,10 @@ getLabelData <- function(data, which, id.n = NULL) {
 #'
 #' @keywords hplot
 #'
-#' @export
+#' @import ggplot2
 #' @import robustbase
 #' @importFrom grDevices devAskNewPage
+#' @export
 
 diagnosticPlot <- function(object, ...) UseMethod("diagnosticPlot")
 
